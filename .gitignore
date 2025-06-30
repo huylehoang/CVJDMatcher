@@ -1,0 +1,36 @@
+```gitignore
+# ===============================
+# 📦 CVJDMatcher Git Ignore File
+# Blocks compiled artifacts, models, Xcode junk, and virtualenvs
+# ===============================
+
+# --- 🧠 Core ML models (DO NOT COMMIT) ---
+*.mlmodelc
+*.mlpackage
+
+# --- 🧪 Python virtual environment ---
+CoreMLTools/venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# --- 🛠️ Xcode build ---
+DerivedData/
+build/
+*.xcworkspace/
+*.xcuserstate
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# --- 🧪 Swift Package Manager ---
+.build/
+.swiftpm/
+Package.resolved
+
+# --- 💥 Logs + temporary files ---
+.DS_Store
+*.swp
+*.lock
+.idea/
+.env

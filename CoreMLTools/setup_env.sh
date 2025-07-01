@@ -33,36 +33,78 @@ pip install --upgrade pip > /dev/null
 echo "📦 Installing requirements..."
 pip install torch==2.5.0 transformers coremltools
 
-# === Run scripts ===
-
-# 1. download_and_convert_embedding_model.py
-MLPACKAGE_NAME="../CVJDMatcher/CoreMLModels/EmbeddingModel.mlpackage"
-if [ -d "$MLPACKAGE_NAME" ]; then
-    echo "✅ $MLPACKAGE_NAME already exists. Skipping download and conversion."
+# === Run embedding model conversion ===
+EMBED_MODEL="../CVJDMatcher/CoreMLModels/EmbeddingModel.mlpackage"
+if [ -d "$EMBED_MODEL" ]; then
+    echo "✅ $EMBED_MODEL already exists. Skipping download and conversion."
 else
-    echo "🚀 Running conversion script..."
+    echo "🚀 Running embedding model conversion script..."
     if python download_and_convert_embedding_model.py; then
-        echo "🎉 Done: Model saved at ./$MLPACKAGE_NAME"
+        echo "🎉 Done: Embedding model saved at $EMBED_MODEL"
     else
-        echo "❌ Conversion failed"
+        echo "❌ Embedding model conversion failed"
         exit 1
     fi
 fi
 
-# 2. download_and_convert_reasoning_model.py
-REASONING_MLPACKAGE_NAME="../CVJDMatcher/CoreMLModels/ReasoningModel.mlpackage"
-if [ -d "$REASONING_MLPACKAGE_NAME" ]; then
-    echo "✅ $REASONING_MLPACKAGE_NAME already exists. Skipping download and conversion."
+# === Export MiniLM vocab ===
+VOCAB_MINILM="../CVJDMatcher/CoreMLModels/MiniLMVocab.json"
+if [ -f "$VOCAB_MINILM" ]; then
+    echo "✅ $VOCAB_MINILM already exists. Skipping export."
+else
+    echo "🧠 Exporting MiniLM vocab..."
+    if python export_minilm_vocab.py; then
+        echo "🎉 Done: MiniLM vocab saved at $VOCAB_MINILM"
+    else
+        echo "❌ Failed to export MiniLM vocab"
+        exit 1
+    fi
+fi
+
+# === Run reasoning model conversion ===
+REASONING_MODEL="../CVJDMatcher/CoreMLModels/ReasoningModel.mlpackage"
+if [ -d "$REASONING_MODEL" ]; then
+    echo "✅ $REASONING_MODEL already exists. Skipping download and conversion."
 else
     echo "🚀 Running reasoning model conversion script..."
     if python download_and_convert_reasoning_model.py; then
-        echo "🎉 Done: Reasoning model saved at ./$REASONING_MLPACKAGE_NAME"
+        echo "🎉 Done: Reasoning model saved at $REASONING_MODEL"
     else
         echo "❌ Reasoning model conversion failed"
         exit 1
     fi
 fi
 
-# Clean up
+# === Export GPT-2 vocab ===
+VOCAB_GPT2="../CVJDMatcher/CoreMLModels/GPT2Vocab.json"
+if [ -f "$VOCAB_GPT2" ]; then
+    echo "✅ $VOCAB_GPT2 already exists. Skipping export."
+else
+    echo "🧠 Exporting GPT-2 vocab..."
+    if python export_gpt2_vocab.py; then
+        echo "🎉 Done: GPT-2 vocab saved at $VOCAB_GPT2"
+    else
+        echo "❌ Failed to export GPT-2 vocab"
+        exit 1
+    fi
+fi
+
+# === Export GPT-2 merges ===
+MERGES_GPT2="../CVJDMatcher/CoreMLModels/GPT2Merges.json"
+if [ -f "$MERGES_GPT2" ]; then
+    echo "✅ $MERGES_GPT2 already exists. Skipping export."
+else
+    echo "🧠 Exporting GPT-2 merges..."
+    if python export_gpt2_merges.py; then
+        echo "🎉 Done: GPT-2 merges saved at $MERGES_GPT2"
+    else
+        echo "❌ Failed to export GPT-2 merges"
+        exit 1
+    fi
+fi
+
+# === Cleanup virtual env ===
 echo "🧹 Cleaning up virtual environment..."
-rm -rf venv
+deactivate
+rm -rf "$VENV_DIR"
+echo "✅ Done."

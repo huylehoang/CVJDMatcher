@@ -1,4 +1,4 @@
-# CVJDMatcher – Core ML Embedding Model Setup Guide (CoreMLModels)
+# CVJDMatcher – Core ML Embedding & Reasoning Models Setup (`CoreMLModels`)
 
 ---
 
@@ -6,79 +6,92 @@
 
 ```
 CVJDMatcher/
-├── CoreMLModels/
-│   ├── download_and_convert_embedding_model.py   # ✅ Python script to convert embedding model
-│   ├── download_and_convert_reasoning_model.py   # ✅ Python script to convert reasoning model
-│   └── setup_env.sh                              # ✅ One-time environment setup script
+├── CoreMLTools/
+│   ├── download_and_convert_embedding_model.py   # ✅ Convert MiniLM to CoreML
+│   ├── export_minilm_vocab.py                    # ✅ Export MiniLM vocab only
+│   ├── download_and_convert_reasoning_model.py   # ✅ Convert distilgpt2 to CoreML
+│   ├── export_gpt2_vocab.py                      # ✅ Export distilgpt2 vocab only
+│   ├── export_gpt2_merges.py                     # ✅ Export distilgpt2 merges only
+│   └── setup_env.sh                              # ✅ One-click environment setup
 ├── CVJDMatcher/                                  # Xcode iOS project
 │   ├── CoreMLModels/
-│   │   ├── MiniLMEmbedding.mlpackage             # ✅ Core ML embedding model
-│   │   └── ReasoningModel.mlpackage              # ✅ Core ML reasoning model
-│   └── ...
+│   │   ├── MiniLMEmbedding.mlpackage     # 🧠 Embedding model (384-dim vector)
+│   │   ├── MiniLMVocab.json              # 📄 Vocab used by MiniLM tokenizer
+│   │   ├── ReasoningModel.mlpackage      # 💬 Reasoning LLM (distilgpt2)
+│   │   ├── GPT2Vocab.json                # 📄 Vocab used by GPT-2 tokenizer
+│   │   └── GPT2Merges.json               # 🔗 BPE merges for GPT-2 tokenizer
 ```
 
 ---
 
-## 🚀 Quick Start (1-time setup)
+## 🚀 One-Time Setup (macOS)
 
-This folder provides local scripts to download and convert **embedding + reasoning models** to `.mlpackage`.
+> 📦 This will download, convert, and export both embedding + reasoning models.
 
-### ✅ Prerequisites
+### ✅ Requirements
 
-- macOS with Homebrew installed
-- Python 3.11+ (`brew install python@3.11`)
+- macOS (Apple Silicon preferred)
+- Homebrew installed
+- Python 3.11+  
+  👉 Install via: `brew install python@3.11`
 
 ---
 
 ### ✅ Run Setup Script
 
 ```bash
-cd CoreMLModels
+cd CoreMLTools
 chmod +x setup_env.sh
 ./setup_env.sh
 ```
 
 This will:
 
-- Create Python venv in `CoreMLModels/venv`
-- Download & convert:
-  - `sentence-transformers/all-MiniLM-L6-v2` → `MiniLMEmbedding.mlpackage`
-  - `distilgpt2` → `ReasoningModel.mlpackage`
-- Copy both `.mlpackage` files into the Xcode project folder
-- Automatically skip models that already exist
-- Clean up the virtual environment after run
+- Setup virtual environment (`venv`)
+- Install dependencies: `torch`, `transformers`, `coremltools`
+- Run:
+  - `download_and_convert_embedding_model.py`
+  - `export_minilm_vocab.py`
+  - `download_and_convert_reasoning_model.py`
+  - `export_gpt2_vocab.py`
+  - `export_gpt2_merges.py`
+- Output will be placed inside `CVJDMatcher/CoreMLModels/`
+- Skip any model that already exists
+- Auto-clean the venv when done
 
 ---
 
-## 🧠 Model Overview
+## 🧠 Model Summary
 
-| Type      | Model Name                                | Purpose                    | Output                          |
-|-----------|-------------------------------------------|----------------------------|---------------------------------|
-| Embedding | `MiniLMEmbedding.mlpackage`               | Embed JD/CV strings        | 384-dim vector (`[CLS]`)        |
-| Reasoning | `ReasoningModel.mlpackage` (distilgpt2)   | Explain top match (LLM)    | Generated natural language      |
+| Type      | Model Source                             | Output                          | Usage                                 |
+|-----------|-------------------------------------------|----------------------------------|----------------------------------------|
+| Embedding | `sentence-transformers/all-MiniLM-L6-v2` | 384-dim vector `[CLS]`          | Vector similarity scoring between JD & CV |
+| Reasoning | `distilgpt2`                             | Text explanation (Match, Score) | LLM-generated explanation for best CV  |
 
-Use cosine similarity between vectors to rank CV relevance.
-
----
-
-## 💡 Tips
-
-- `.mlpackage` = folder-based Core ML model bundle
-- Works fully offline with `CoreML.framework`
-- Can be tested directly in Swift code via `MLModel(...)` + `MLDictionaryFeatureProvider(...)`
-- No need to open or compile `.mlmodel` manually
+> Cosine similarity is used to rank CVs for a given JD based on MiniLM embeddings.  
+> The top CV is passed to the reasoning model for natural-language explanation.
 
 ---
 
-## 🔁 Re-run Setup
+## 🛠 How to Use in Swift
 
-To force re-download and reconversion:
+- Load with `MLModel(contentsOf:)`
+- Prepare input using `MLDictionaryFeatureProvider`
+- You can embed text, or generate reasoning explanation entirely offline.
+- `.mlpackage` is already compiled and can be embedded in Xcode project.
+
+---
+
+## 🔁 Re-run After Changes
+
+To re-convert after model update or cleanup:
 
 ```bash
-cd CoreMLModels
+cd CoreMLTools
 ./setup_env.sh
 ```
 
-It will skip models that already exist unless deleted.
+- It will skip models that already exist.
+- To force re-convert: delete `*.mlpackage` or vocab JSON files manually before rerunning.
 
 ---

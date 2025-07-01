@@ -34,3 +34,4 @@ Package.resolved
 *.lock
 .idea/
 .env
+CVJDMatcher/CoreMLModels

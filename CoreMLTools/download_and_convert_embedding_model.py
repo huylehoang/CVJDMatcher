@@ -1,18 +1,25 @@
+# download_and_convert_embedding_model.py
+
 import os
 import torch
 import numpy as np
 import coremltools as ct
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModel, AutoTokenizer
 
-# Step 1: Load tokenizer + model
+# === CONFIGURATION ===
 MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
+OUTPUT_DIR = "../CVJDMatcher/CoreMLModels"
+MLPACKAGE_NAME = "EmbeddingModel.mlpackage"
+MAX_LEN = 128
+
+# === STEP 1: Load tokenizer + model ===
 print(f"🔍 Downloading model from HuggingFace: {MODEL_ID}")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
 hf_model = AutoModel.from_pretrained(MODEL_ID)
 hf_model.eval()
 hf_model.requires_grad_(False)
 
-# Step 2: Wrap model inside nn.Module for tracing
+# === STEP 2: Wrap model for CLS token output
 class CLSModel(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
@@ -20,31 +27,30 @@ class CLSModel(torch.nn.Module):
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-        return outputs.last_hidden_state[:, 0]  # CLS token embedding
+        return outputs.last_hidden_state[:, 0]  # CLS token
 
 wrapped_model = CLSModel(hf_model)
 
-# Step 3: Dummy input for tracing (use correct torch.int64 for tokenizer output)
-max_len = 128
-input_ids = torch.randint(low=0, high=tokenizer.vocab_size, size=(1, max_len), dtype=torch.long)
-attention_mask = torch.ones((1, max_len), dtype=torch.long)
+# === STEP 3: Trace with dummy input
+input_ids = torch.randint(low=0, high=tokenizer.vocab_size, size=(1, MAX_LEN), dtype=torch.long)
+attention_mask = torch.ones((1, MAX_LEN), dtype=torch.long)
 
 print("📦 Tracing model...")
 traced = torch.jit.trace(wrapped_model, (input_ids, attention_mask), strict=False)
 
-# Step 4: Convert to Core ML
+# === STEP 4: Convert to Core ML
 print("🔁 Converting to Core ML (.mlpackage)...")
 mlmodel = ct.convert(
     traced,
     convert_to="mlprogram",
     source="pytorch",
     inputs=[
-        ct.TensorType(name="input_ids", shape=(1, max_len), dtype=np.int64),
-        ct.TensorType(name="attention_mask", shape=(1, max_len), dtype=np.int64)
+        ct.TensorType(name="input_ids", shape=(1, MAX_LEN), dtype=np.int64),
+        ct.TensorType(name="attention_mask", shape=(1, MAX_LEN), dtype=np.int64)
     ],
 )
 
-# Step 5: Save model
-output_path = "../CVJDMatcher/CoreMLModels/EmbeddingModel.mlpackage"
-mlmodel.save(output_path)
-print(f"✅ Saved model to {output_path}")
+# === STEP 5: Save model
+mlpackage_path = os.path.join(OUTPUT_DIR, MLPACKAGE_NAME)
+mlmodel.save(mlpackage_path)
+print(f"✅ Saved model to {mlpackage_path}")

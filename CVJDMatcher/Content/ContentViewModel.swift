@@ -15,8 +15,9 @@ final class ContentViewModel: ObservableObject {
 
     @Published var matchResults: [MatchResult] = []
     @Published var errorMessage: String?
+    @Published var isLoading: Bool = false
 
-    private let jd = "Looking for an iOS Developer with Swift, Combine"
+    let jd = "Looking for an iOS Developer with Swift, Combine"
     private let cvs = [
         "Nguyen A: Senior iOS Developer with Swift and MVVM",
         "Tran B: React Engineer using Next.js and TypeScript",
@@ -32,6 +33,7 @@ final class ContentViewModel: ObservableObject {
     }
 
     func runMatchingFlow() {
+        isLoading = true
         Task {
             do {
                 // Load models (can throw if not found or invalid)
@@ -72,6 +74,7 @@ final class ContentViewModel: ObservableObject {
                 // Show any thrown error in UI
                 errorMessage = error.localizedDescription
             }
+            isLoading = false
         }
     }
 

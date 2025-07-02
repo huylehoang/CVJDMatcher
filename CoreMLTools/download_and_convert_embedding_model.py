@@ -1,6 +1,5 @@
-# download_and_convert_embedding_model.py
-
 import os
+import json
 import torch
 import numpy as np
 import coremltools as ct
@@ -8,9 +7,13 @@ from transformers import AutoModel, AutoTokenizer
 
 # === CONFIGURATION ===
 MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
-OUTPUT_DIR = "../CVJDMatcher/CoreMLModels"
+OUTPUT_DIR = "../CVJDMatcher/CoreMLModels/MiniLM"
 MLPACKAGE_NAME = "EmbeddingModel.mlpackage"
+VOCAB_JSON_FILENAME = "MiniLMVocab.json"
 MAX_LEN = 128
+
+# === Ensure output directory exists
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # === STEP 1: Load tokenizer + model ===
 print(f"🔍 Downloading model from HuggingFace: {MODEL_ID}")
@@ -19,7 +22,7 @@ hf_model = AutoModel.from_pretrained(MODEL_ID)
 hf_model.eval()
 hf_model.requires_grad_(False)
 
-# === STEP 2: Wrap model for CLS token output
+# === STEP 2: Wrap model to return CLS token
 class CLSModel(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
@@ -27,7 +30,7 @@ class CLSModel(torch.nn.Module):
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
         outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-        return outputs.last_hidden_state[:, 0]  # CLS token
+        return outputs.last_hidden_state[:, 0]  # Use CLS token
 
 wrapped_model = CLSModel(hf_model)
 
@@ -50,7 +53,18 @@ mlmodel = ct.convert(
     ],
 )
 
-# === STEP 5: Save model
+# === STEP 5: Save .mlpackage
 mlpackage_path = os.path.join(OUTPUT_DIR, MLPACKAGE_NAME)
 mlmodel.save(mlpackage_path)
 print(f"✅ Saved model to {mlpackage_path}")
+
+# === STEP 6: Export vocab as JSON
+print("📄 Exporting vocab to JSON format...")
+vocab = tokenizer.get_vocab()
+vocab = dict(sorted(vocab.items(), key=lambda item: item[1]))  # sort by ID
+
+vocab_path = os.path.join(OUTPUT_DIR, VOCAB_JSON_FILENAME)
+with open(vocab_path, "w", encoding="utf-8") as f:
+    json.dump(vocab, f, indent=2, ensure_ascii=False)
+
+print(f"✅ Saved vocab to {vocab_path}")

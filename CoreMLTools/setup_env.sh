@@ -34,7 +34,7 @@ echo "📦 Installing requirements..."
 pip install torch==2.5.0 transformers coremltools
 
 # === Run embedding model conversion ===
-EMBED_MODEL="../CVJDMatcher/CoreMLModels/EmbeddingModel.mlpackage"
+EMBED_MODEL="../CVJDMatcher/CoreMLModels/MiniLM/EmbeddingModel.mlpackage"
 if [ -d "$EMBED_MODEL" ]; then
     echo "✅ $EMBED_MODEL already exists. Skipping download and conversion."
 else
@@ -47,22 +47,8 @@ else
     fi
 fi
 
-# === Export MiniLM vocab ===
-VOCAB_MINILM="../CVJDMatcher/CoreMLModels/MiniLMVocab.json"
-if [ -f "$VOCAB_MINILM" ]; then
-    echo "✅ $VOCAB_MINILM already exists. Skipping export."
-else
-    echo "🧠 Exporting MiniLM vocab..."
-    if python export_minilm_vocab.py; then
-        echo "🎉 Done: MiniLM vocab saved at $VOCAB_MINILM"
-    else
-        echo "❌ Failed to export MiniLM vocab"
-        exit 1
-    fi
-fi
-
 # === Run reasoning model conversion ===
-REASONING_MODEL="../CVJDMatcher/CoreMLModels/ReasoningModel.mlpackage"
+REASONING_MODEL="../CVJDMatcher/CoreMLModels/GPT2/ReasoningModel.mlpackage"
 if [ -d "$REASONING_MODEL" ]; then
     echo "✅ $REASONING_MODEL already exists. Skipping download and conversion."
 else
@@ -71,34 +57,6 @@ else
         echo "🎉 Done: Reasoning model saved at $REASONING_MODEL"
     else
         echo "❌ Reasoning model conversion failed"
-        exit 1
-    fi
-fi
-
-# === Export GPT-2 vocab ===
-VOCAB_GPT2="../CVJDMatcher/CoreMLModels/GPT2Vocab.json"
-if [ -f "$VOCAB_GPT2" ]; then
-    echo "✅ $VOCAB_GPT2 already exists. Skipping export."
-else
-    echo "🧠 Exporting GPT-2 vocab..."
-    if python export_gpt2_vocab.py; then
-        echo "🎉 Done: GPT-2 vocab saved at $VOCAB_GPT2"
-    else
-        echo "❌ Failed to export GPT-2 vocab"
-        exit 1
-    fi
-fi
-
-# === Export GPT-2 merges ===
-MERGES_GPT2="../CVJDMatcher/CoreMLModels/GPT2Merges.json"
-if [ -f "$MERGES_GPT2" ]; then
-    echo "✅ $MERGES_GPT2 already exists. Skipping export."
-else
-    echo "🧠 Exporting GPT-2 merges..."
-    if python export_gpt2_merges.py; then
-        echo "🎉 Done: GPT-2 merges saved at $MERGES_GPT2"
-    else
-        echo "❌ Failed to export GPT-2 merges"
         exit 1
     fi
 fi

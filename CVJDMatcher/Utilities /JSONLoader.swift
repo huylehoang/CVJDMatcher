@@ -69,4 +69,27 @@ enum JSONLoader {
             throw JSONLoaderError.decodingFailed
         }
     }
+
+    /// Load and decode a JSON file into a specified Decodable model type.
+    static func loadModel<T: Decodable>(
+        from filename: String,
+        as type: T.Type,
+        bundle: Bundle = .main,
+        decoder: JSONDecoder = JSONDecoder()
+    ) throws -> T {
+        guard let url = bundle.url(forResource: filename, withExtension: "json") else {
+            throw JSONLoaderError.fileNotFound(name: filename)
+        }
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            throw JSONLoaderError.invalidData
+        }
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw JSONLoaderError.decodingFailed
+        }
+    }
 }

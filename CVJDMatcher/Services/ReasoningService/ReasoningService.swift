@@ -18,6 +18,7 @@ enum ReasoningError: Error, LocalizedError {
     case modelNotFound
     case predictionFailed
     case outputMissing
+    case invalidInput
     case invalidOutput
 
     var errorDescription: String? {
@@ -28,6 +29,8 @@ enum ReasoningError: Error, LocalizedError {
             "Failed to run prediction with reasoning model."
         case .outputMissing:
             "No explanation found in model output."
+        case .invalidInput:
+            "Invalid input format found in model input."
         case .invalidOutput:
             "Invalid explanation format found in model output."
         }
@@ -43,7 +46,6 @@ final class CoreMLReasoningService: ReasoningService {
     private let modelName: String
     private let bundle: Bundle
     private let tokenizer: ReasoningTokenizer
-    private let decoder: ReasoningDecoder
     private let maxLength: Int
 
     /// Create a reasoning service with dependencies injected
@@ -51,13 +53,11 @@ final class CoreMLReasoningService: ReasoningService {
         modelName: String = "ReasoningModel",
         bundle: Bundle = .main,
         tokenizer: ReasoningTokenizer = GPT2ReasoningTokenizer(),
-        decoder: ReasoningDecoder = GPT2ReasoningDecoder(),
         maxLength: Int = 128
     ) {
         self.modelName = modelName
         self.bundle = bundle
         self.tokenizer = tokenizer
-        self.decoder = decoder
         self.maxLength = maxLength
     }
 
@@ -75,70 +75,26 @@ final class CoreMLReasoningService: ReasoningService {
         guard let model else {
             throw ReasoningError.modelNotFound
         }
-        // 1. Construct prompt from JD and CV
+        // Construct prompt from JD and CV
         let prompt = """
-        You are an expert AI assistant for job candidate matching.
-
-        Given a job description (JD) and a candidate's CV, \
-        analyze whether the candidate is a good fit. Then:
-
-        1. Output: "Match: YES" or "Match: NO"
-        2. Output: "Score: [0.0 – 1.0]" confidence score
-        3. Output: "Reason: [short explanation in 3–5 steps]"
-
-        Please evaluate based on:
-        - Skills and technologies
-        - Years of experience
-        - Domain alignment
-        - Gaps or mismatches
-        - Communication or project fit
-
-        Example:
-
-        JD:
-        We are hiring a Senior iOS Developer with 3+ years of experience in \
-        Swift, UIKit, and MVVM. Knowledge of RxSwift is a plus.
-
-        CV:
-        Nguyen A has 5 years of iOS development experience. Skilled in \
-        Swift, UIKit, and MVVM. Used RxSwift in 2 projects. Published 3 apps to App Store.
-
-        Explanation:
-        Match: YES  
-        Score: 0.89  
-        Reason:  
-        1. Candidate exceeds experience requirement.  
-        2. Core skills (Swift, UIKit, MVVM) match exactly.  
-        3. Has RxSwift experience (preferred).  
-        4. Published apps show practical impact.  
-        Conclusion: Strong alignment.
-
-        Now analyze the following:
-
-        JD:
-        \(jd)
-
-        CV:
-        \(cv)
-
-        Explanation:
+        JD: \(jd)
+        CV: \(cv)
+        Match? Answer YES or NO
         """
-        // 2. Tokenize prompt to input IDs
-        let inputIDs = try tokenizer.tokenize(prompt, maxLength: maxLength)
-        // 3. Convert to MLMultiArray
-        let inputArray = try MLMultiArrayUtils.int32(from: inputIDs, shape: [1, maxLength])
-        // 4. Run Core ML prediction
-        let features = try MLDictionaryFeatureProvider(dictionary: ["input_ids": inputArray])
+        // Tokenize prompt to input IDs
+        let inputIDs = try tokenizer.encode(prompt, maxLength: maxLength)
+        // Run Core ML prediction
+        let features = try MLDictionaryFeatureProvider(dictionary: ["input_ids": inputIDs])
         let output = try model.prediction(from: features)
-        // 5. Get MLMultiArray logits (shape: [1, sequence, vocab])
+        // Get MLMultiArray logits (shape: [1, sequence, vocab])
         guard
             let outputName = model.modelDescription.outputDescriptionsByName.keys.first,
             let logits = output.featureValue(for: outputName)?.multiArrayValue
         else {
             throw ReasoningError.invalidOutput
         }
-        // 6. Decode logits to final explanation
-        let explanation = try decoder.decode(from: logits)
+        // Decode logits to final explanation
+        let explanation = try tokenizer.decode(from: logits)
         return explanation
     }
 }

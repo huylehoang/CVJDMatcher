@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 2460C68B2E1B8375003E4E2E /* Transformers */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		245A7BCB2E123CDD00936155 /* CVJDMatcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CVJDMatcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = CVJDMatcher;
 			packageProductDependencies = (
+				2460C68B2E1B8375003E4E2E /* Transformers */,
 			);
 			productName = CVJDMatcher;
 			productReference = 245A7BCB2E123CDD00936155 /* CVJDMatcher.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 245A7BC22E123CDD00936155;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 245A7BCC2E123CDD00936155 /* Products */;
 			projectDirPath = "";
@@ -324,6 +333,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.21;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2460C68B2E1B8375003E4E2E /* Transformers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Transformers;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 245A7BC32E123CDD00936155 /* Project object */;
 }

@@ -4,10 +4,6 @@
 # Blocks compiled artifacts, models, Xcode junk, and virtualenvs
 # ===============================
 
-# --- 🧠 Core ML models (DO NOT COMMIT) ---
-*.mlmodelc
-*.mlpackage
-
 # --- 🧪 Python virtual environment ---
 CoreMLTools/venv/
 venv/
@@ -34,4 +30,3 @@ Package.resolved
 *.lock
 .idea/
 .env
-CVJDMatcher/CoreMLModels

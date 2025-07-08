@@ -34,31 +34,12 @@ echo "📦 Installing requirements..."
 pip install torch==2.5.0 transformers coremltools
 
 # === Run embedding model conversion ===
-EMBED_MODEL="../CVJDMatcher/CoreMLModels/MiniLM/EmbeddingModel.mlpackage"
-if [ -d "$EMBED_MODEL" ]; then
-    echo "✅ $EMBED_MODEL already exists. Skipping download and conversion."
+echo "🚀 Running embedding model conversion script..."
+if python download_and_convert_embedding_model.py; then
+    echo "🎉 Done: Embedding model saved at $EMBED_MODEL"
 else
-    echo "🚀 Running embedding model conversion script..."
-    if python download_and_convert_embedding_model.py; then
-        echo "🎉 Done: Embedding model saved at $EMBED_MODEL"
-    else
-        echo "❌ Embedding model conversion failed"
-        exit 1
-    fi
-fi
-
-# === Run reasoning model conversion ===
-REASONING_MODEL="../CVJDMatcher/CoreMLModels/GPT2/ReasoningModel.mlpackage"
-if [ -d "$REASONING_MODEL" ]; then
-    echo "✅ $REASONING_MODEL already exists. Skipping download and conversion."
-else
-    echo "🚀 Running reasoning model conversion script..."
-    if python download_and_convert_reasoning_model.py; then
-        echo "🎉 Done: Reasoning model saved at $REASONING_MODEL"
-    else
-        echo "❌ Reasoning model conversion failed"
-        exit 1
-    fi
+    echo "❌ Embedding model conversion failed"
+    exit 1
 fi
 
 # === Cleanup virtual env ===

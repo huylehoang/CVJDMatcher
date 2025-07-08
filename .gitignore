@@ -30,3 +30,8 @@ Package.resolved
 *.lock
 .idea/
 .env
+
+# --- 🧠 Core ML models (DO NOT COMMIT) ---
+*.mlmodelc
+*.mlpackage
+*.json

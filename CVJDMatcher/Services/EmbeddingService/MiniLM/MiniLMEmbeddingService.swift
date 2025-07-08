@@ -8,7 +8,7 @@
 import CoreML
 
 final class MiniLMEmbeddingService: EmbeddingService {
-    private var model: EmbeddingModel?
+    private var model: mini_lm?
     private let tokenizer: MiniLMTokenizerInterface
     private let maxLength: Int
 
@@ -23,7 +23,7 @@ final class MiniLMEmbeddingService: EmbeddingService {
 
     /// Loads the compiled Core ML model from the app bundle.
     func loadModel() async throws {
-        model = try await EmbeddingModel.load()
+        model = try await mini_lm.load()
     }
 
     /// Runs the Core ML model on the input text and returns the embedding vector.

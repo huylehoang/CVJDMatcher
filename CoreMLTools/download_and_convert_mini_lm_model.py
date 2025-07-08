@@ -8,8 +8,8 @@ from transformers import AutoModel, AutoTokenizer
 # === CONFIGURATION ===
 MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
 OUTPUT_DIR = "../CVJDMatcher/CoreMLModels/MiniLM"
-MLPACKAGE_NAME = "EmbeddingModel.mlpackage"
-VOCAB_JSON_FILENAME = "MiniLMVocab.json"
+MLPACKAGE_NAME = "mini_lm.mlpackage"
+VOCAB_JSON_FILENAME = "mini_lm_vocab.json"
 MAX_LEN = 128
 
 # === Ensure output directory exists

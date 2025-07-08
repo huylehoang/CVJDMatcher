@@ -21,7 +21,7 @@ final class MiniLMTokenizer: MiniLMTokenizerInterface {
     private let unkToken = "[UNK]"
     private let padToken = "[PAD]"
 
-    init(vocabFile: String = "MiniLMVocab", bundle: Bundle = .main) {
+    init(vocabFile: String = "mini_lm_vocab", bundle: Bundle = .main) {
         self.vocabFile = vocabFile
         self.bundle = bundle
     }

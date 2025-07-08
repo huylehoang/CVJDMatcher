@@ -33,10 +33,19 @@ pip install --upgrade pip > /dev/null
 echo "📦 Installing requirements..."
 pip install torch==2.5.0 transformers coremltools
 
-# === Run embedding model conversion ===
-echo "🚀 Running embedding model conversion script..."
-if python download_and_convert_embedding_model.py; then
-    echo "🎉 Done: Embedding model saved at $EMBED_MODEL"
+# === Run all-MiniLM-L6-v2  model conversion ===
+echo "🚀 Running all-MiniLM-L6-v2 model conversion script..."
+if python download_and_convert_mini_lm_model.py; then
+    echo "🎉 Done: Mini_LM model saved"
+else
+    echo "❌ Embedding model conversion failed"
+    exit 1
+fi
+
+# === Run Llama2 model conversion ===
+echo "🚀 Running Llama2 model conversion script..."
+if python download_and_convert_llama2_model.py; then
+    echo "🎉 Done: Llama2 model saved"
 else
     echo "❌ Embedding model conversion failed"
     exit 1

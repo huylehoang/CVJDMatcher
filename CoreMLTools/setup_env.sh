@@ -47,7 +47,7 @@ echo "🚀 Running Llama2 model conversion script..."
 if python download_and_convert_llama2_model.py; then
     echo "🎉 Done: Llama2 model saved"
 else
-    echo "❌ Embedding model conversion failed"
+    echo "❌ Llama2 model conversion failed"
     exit 1
 fi
 

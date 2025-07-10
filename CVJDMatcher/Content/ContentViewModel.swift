@@ -10,39 +10,45 @@ import Combine
 
 @MainActor
 final class ContentViewModel: ObservableObject {
-    private let embeddingService: EmbeddingService
-    private let reasoningService: ReasoningService
-
-    @Published var matchResult: MatchResult?
+    private let ragService: RAGService
+    @Published var matchResults = [MatchResult]()
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
+    let jd = """
+    We are hiring a passionate iOS Developer to join our mobile team. \
+    The ideal candidate should have:
+    - 3+ years of experience building native iOS applications
+    - Proficiency in Swift and Combine
+    - Experience with MVVM architecture
+    - Familiarity with performance optimization and memory management
+    - Bonus: experience with SwiftUI, modular architecture, or Core ML
+    """
+    private let cvs = [
+        """
+        Nguyen A is a Senior iOS Engineer with over 5 years of experience developing apps \
+        for finance and e-commerce. Skilled in Swift, MVVM, Combine, and UIKit. Recently worked \
+        on a modular iOS architecture project using Swift Package Manager. Experienced with \
+        CoreData, REST APIs, and performance tuning.
+        """,
+        """
+        Tran B is a Frontend Engineer specializing in web development using React, Next.js, \
+        and TypeScript. Familiar with design systems and responsive UI. No mobile development \
+        experience. Mainly worked on dashboard systems and internal tools for a logistics company.
+        """,
+        """
+        Le C is an Android Developer with strong knowledge in Kotlin, Jetpack Compose, \
+        and MVVM. Has worked on ride-hailing and fintech apps. Led the Android migration from \
+        Java to Kotlin. No professional iOS experience, but has contributed to Flutter-based \
+        side projects.
+        """
+    ]
 
-    let jd = "Looking for an iOS Developer with Swift, Combine"
-    private let cv = "Nguyen A: Senior iOS Developer with Swift and MVVM"
-    //        "Tran B: React Engineer using Next.js and TypeScript",
-    //        "Le C: Android Engineer with Kotlin, Jetpack Compose"
-
-    init(
-        embeddingService: EmbeddingService = MiniLMEmbeddingService(),
-        reasoningService: ReasoningService = Llama2ReasoningService()
-    ) {
-        self.embeddingService = embeddingService
-        self.reasoningService = reasoningService
+    init(ragService: RAGService = LocalRAGService()) {
+        self.ragService = ragService
     }
 
     func runMatchingFlow() {
         isLoading = true
-        reasoningService.onPartialExplanation = { [weak self] explanation in
-            if let matchResult = self?.matchResult {
-                DispatchQueue.main.async {
-                    self?.matchResult = MatchResult(
-                        cv: matchResult.cv,
-                        score: matchResult.score,
-                        explanation: explanation
-                    )
-                }
-            }
-        }
         // Use Task.detached to run CPU-heavy work off the main thread
 
         // What is Task.detached?
@@ -56,26 +62,17 @@ final class ContentViewModel: ObservableObject {
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             do {
-                // Load models (can throw if not found or invalid)
-                try await self.embeddingService.loadModel()
-                try await self.reasoningService.loadModel()
-
-                let jdVector = try await self.embeddingService.embed(self.jd)
-                let cvVector = try await self.embeddingService.embed(self.cv)
-                let score = await cosineSimilarity(jdVector, cvVector)
-                await MainActor.run {
-                    self.matchResult = MatchResult(cv: self.cv, score: score, explanation: "")
+                try await self.ragService.loadModels()
+                try await self.ragService.loadData(self.cvs)
+                let matchResults = try await self.ragService.query(jd: self.jd) { matchResuls in
+                    DispatchQueue.main.async {
+                        self.matchResults = matchResuls
+                    }
                 }
-                let explanation = try await self.reasoningService.explain(jd: self.jd, cv: self.cv)
                 await MainActor.run {
-                    self.matchResult = MatchResult(
-                        cv: self.cv,
-                        score: score,
-                        explanation: explanation
-                    )
+                    self.matchResults = matchResults
                 }
             } catch {
-                // Show any thrown error in UI
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                 }
@@ -84,14 +81,5 @@ final class ContentViewModel: ObservableObject {
                 self.isLoading = false
             }
         }
-    }
-
-    // MARK: - Cosine Similarity
-
-    private func cosineSimilarity(_ a: [Double], _ b: [Double]) -> Double {
-        let dot = zip(a, b).map(*).reduce(0, +)
-        let normA = sqrt(a.map { $0 * $0 }.reduce(0, +))
-        let normB = sqrt(b.map { $0 * $0 }.reduce(0, +))
-        return dot / (normA * normB)
     }
 }

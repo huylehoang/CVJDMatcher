@@ -30,12 +30,13 @@ struct ContentView: View {
                             .foregroundColor(.red)
                     }
                 }
-                // Match result
-                if let matchResult = viewModel.matchResult {
+                // Match results
+                ForEach(viewModel.matchResults) { matchResult in
                     Section {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(matchResult.cv)
-                                .font(.headline)
+                                .font(.body)
+                                .fontWeight(.bold)
                             Text("Score: \(matchResult.scoreString)")
                                 .font(.subheadline)
                             Text(matchResult.explanation)

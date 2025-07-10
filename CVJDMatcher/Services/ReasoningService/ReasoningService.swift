@@ -9,10 +9,12 @@ import CoreML
 
 /// Abstraction for generating explanations from a reasoning model.
 protocol ReasoningService: AnyObject {
+    typealias ConstructPrompt = (String, String) -> String
     /// Optional callback to report intermediate explanation tokens and their timing
     var onPartialExplanation: ((String) -> Void)? { get set }
+    var constructPrompt: ConstructPrompt { get set }
     func loadModel() async throws
-    func explain(jd: String, cv: String) async throws -> String
+    func explain(jd: String, cv: String) throws -> String
 }
 
 extension ReasoningService {

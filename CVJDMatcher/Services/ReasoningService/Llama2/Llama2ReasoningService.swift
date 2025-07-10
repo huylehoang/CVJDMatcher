@@ -20,6 +20,37 @@ final class Llama2ReasoningService: ReasoningService {
 
     var onPartialExplanation: ((String) -> Void)?
 
+    var constructPrompt: ConstructPrompt = { jd, cv in
+        """
+        You are an AI model helping match Job Descriptions (JD) with Candidate CVs.
+
+        Respond in **exactly this format** and focus **only on the technical match**:
+        Job: <copied JD>
+        CV: <copied CV>
+        Match: Yes | No
+        Reason: <1-2 short technical reasons why they match or not>
+
+        Do not write anything outside of this format. No summaries, no greetings.
+
+        === Format Example ===
+        Job: Looking for iOS Developer with Swift, Combine
+        CV: Nguyen A: Senior iOS Developer with Swift and MVVM
+        Match: Yes
+        Reason: Strong iOS and Swift experience; MVVM shows architecture knowledge; \
+        Combine is learnable.
+
+        === Another Example ===
+        Job: Backend Developer with Node.js, MongoDB
+        CV: Jenny B: Frontend Developer with React, TailwindCSS
+        Match: No
+        Reason: Candidate lacks backend or Node.js experience.
+
+        === Now Evaluate ===
+        Job: \(jd)
+        CV: \(cv)
+        """
+    }
+
     func loadModel() async throws {
         model = try await llama_2_7b_chat.load()
         let languageModel = LanguageModel(model: model.model)
@@ -40,7 +71,10 @@ final class Llama2ReasoningService: ReasoningService {
     }
 
     func explain(jd: String, cv: String) throws -> String {
-        let prompt = makePrompt2(jd: jd, cv: cv)
+        let prompt = constructPrompt(jd, cv)
+        print("----------------------------------------------------")
+        print(" ⚡️ Prompt: \(prompt)")
+        print("----------------------------------------------------\n\n")
         var tokens = tokenizer.encode(text: prompt)
         var newTokens = [Int]()
         for i in 0..<maxNewTokens {
@@ -102,96 +136,20 @@ final class Llama2ReasoningService: ReasoningService {
         tokenizer.decode(tokens: tokens).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func makeSimplePrompt(jd: String, cv: String) -> String {
-        """
-        [INST] <<SYS>>
-        You are a job match assistant.
-        Respond in format:
-        Match: Yes/No
-        Reason: (concise explanation)
-        <</SYS>>
-        Job Description: \(jd)
-        Candidate CV: \(cv)
-        [/INST]
-        Match:
-        """
-    }
-
-    private func makePrompt(jd: String, cv: String) -> String {
-        """
-        [INST] <<SYS>>
-        You are an AI assistant that evaluates whether a candidate matches a job description.
-        
-        ALWAYS reply using **only this format**:
-        Match: Yes or No  
-        Reason: <short explanation of why they match or not (1–2 sentences)>
-        
-        Do not add anything else. No introductions. No extra text. Only output in that format.
-        <</SYS>>
-        
-        Job: Looking for iOS Developer with Swift, Combine  
-        CV: Nguyen A: Senior iOS Developer with Swift and MVVM  
-        Match: Yes
-        Reason: Candidate has strong iOS experience and Swift; \
-        MVVM indicates architecture knowledge. Combine is learnable.
-        
-        Job: Backend Developer with Node.js, PostgreSQL  
-        CV: Jenny B: Frontend Developer with React, TailwindCSS  
-        Match: No
-        Reason: No backend or database experience in CV.
-        
-        Job: \(jd)  
-        CV: \(cv)  
-        Match:
-        Reason:
-        [/INST]
-        """
-    }
-
-    private func makePrompt2(jd: String, cv: String) -> String {
-        """
-        You are an AI model that determines whether a job description and a candidate CV match.
-        
-        Respond strictly using:
-        Match: Match or Not Match  
-        Reason: 1–2 concise sentences explaining the match decision.
-        
-        Do NOT write anything else. No introductions. No summaries.
-        
-        === Example 1 ===
-        Job: Looking for iOS Developer with Swift, Combine  
-        CV: Nguyen A: Senior iOS Developer with Swift and MVVM  
-        Match: Match  
-        Reason: Strong iOS and Swift experience; MVVM shows architecture knowledge; \
-        Combine is learnable.
-        
-        === Example 2 ===
-        Job: Backend Developer with Node.js, MongoDB  
-        CV: Jenny B: Frontend Developer with React, TailwindCSS  
-        Match: Not Match  
-        Reason: Candidate has no backend experience in the required stack.
-        
-        === Now evaluate ===
-        Job: \(jd)
-        CV: \(cv)
-        Match:
-        """
-    }
-
-    private func legacyPredictNextToken(from tokens: [Int]) -> Int {
-        let truncated = tokens.suffix(seqLen)
-        let padded = Array(truncated) +
-        Array(repeating: tokenizer.eosTokenId ?? 0, count: seqLen - truncated.count)
-        let input_ids = MLMultiArray.from(padded, dims: 2)
-        let attentionValues = padded.map { $0 == (tokenizer.eosTokenId ?? 0) ? 0 : 1 }
-        let attention_mask = MLMultiArray.from(attentionValues, dims: 2)
-        let output = try! model.prediction(input_ids: input_ids, attention_mask: attention_mask)
-        let logitsSlice = MLMultiArray.slice(
-            output.logits,
-            indexing: [.select(0), .select(truncated.count - 1), .slice]
-        )
-        let logits = MLMultiArray.toDoubleArray(logitsSlice)
-        let top = Math.topK(arr: logits, k: topK)
-        return Math.sample(indexes: top.indexes, probs: top.probs)
-    }
+//    private func legacyPredictNextToken(from tokens: [Int]) -> Int {
+//        let truncated = tokens.suffix(seqLen)
+//        let padded = Array(truncated) +
+//        Array(repeating: tokenizer.eosTokenId ?? 0, count: seqLen - truncated.count)
+//        let input_ids = MLMultiArray.from(padded, dims: 2)
+//        let attentionValues = padded.map { $0 == (tokenizer.eosTokenId ?? 0) ? 0 : 1 }
+//        let attention_mask = MLMultiArray.from(attentionValues, dims: 2)
+//        let output = try! model.prediction(input_ids: input_ids, attention_mask: attention_mask)
+//        let logitsSlice = MLMultiArray.slice(
+//            output.logits,
+//            indexing: [.select(0), .select(truncated.count - 1), .slice]
+//        )
+//        let logits = MLMultiArray.toDoubleArray(logitsSlice)
+//        let top = Math.topK(arr: logits, k: topK)
+//        return Math.sample(indexes: top.indexes, probs: top.probs)
+//    }
 }

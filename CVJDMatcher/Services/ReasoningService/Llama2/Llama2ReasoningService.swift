@@ -52,13 +52,14 @@ final class Llama2ReasoningService: ReasoningService {
     }
 
     func loadModel() async throws {
-        model = try await llama_2_7b_chat.load()
+        let configuration = MLModelConfiguration()
+        configuration.computeUnits = .all
+        model = try await llama_2_7b_chat.load(configuration: configuration)
         let languageModel = LanguageModel(model: model.model)
         tokenizer = try await AutoTokenizer.from(
             tokenizerConfig: languageModel.tokenizerConfig!,
             tokenizerData: languageModel.tokenizerData
         )
-        model.model.configuration.computeUnits = .all
         if let dims = model
             .model
             .modelDescription
@@ -68,6 +69,9 @@ final class Llama2ReasoningService: ReasoningService {
            let n = dims.last?.intValue {
             seqLen = n
         }
+        print("----------------------------------------------------")
+        print(" ⚡️ Tokenizer: \(String(describing: tokenizer.self))")
+        print("----------------------------------------------------\n\n")
     }
 
     func explain(jd: String, cv: String) async throws -> String {

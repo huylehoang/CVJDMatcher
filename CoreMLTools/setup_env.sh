@@ -51,6 +51,15 @@ else
     exit 1
 fi
 
+# === Run TinyLlama model conversion ===
+echo "🚀 Running TinyLlama model conversion script..."
+if python download_and_convert_tiny_llama_model.py; then
+    echo "🎉 Done: TinyLlama model saved"
+else
+    echo "❌ TinyLlama model conversion failed"
+    exit 1
+fi
+
 # === Cleanup virtual env ===
 echo "🧹 Cleaning up virtual environment..."
 deactivate

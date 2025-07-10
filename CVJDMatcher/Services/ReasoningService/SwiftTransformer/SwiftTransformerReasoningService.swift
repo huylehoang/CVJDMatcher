@@ -54,7 +54,9 @@ final class SwiftTransformerReasoningService: ReasoningService {
     }
 
     func loadModel() async throws {
-        let loadedModel = try await llama_2_7b_chat.load()
+        let configuration = MLModelConfiguration()
+        configuration.computeUnits = .all
+        let loadedModel = try await llama_2_7b_chat.load(configuration: configuration)
         model = LanguageModel(model: loadedModel.model)
         tokenizer = try await AutoTokenizer.from(
             tokenizerConfig: model.tokenizerConfig!,

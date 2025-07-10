@@ -70,7 +70,7 @@ final class Llama2ReasoningService: ReasoningService {
         }
     }
 
-    func explain(jd: String, cv: String) throws -> String {
+    func explain(jd: String, cv: String) async throws -> String {
         let prompt = constructPrompt(jd, cv)
         print("----------------------------------------------------")
         print(" ⚡️ Prompt: \(prompt)")
@@ -132,7 +132,7 @@ final class Llama2ReasoningService: ReasoningService {
         return Math.sample(indexes: top.indexes, probs: top.probs)
     }
 
-    func decode(tokens: [Int]) -> String {
+    private func decode(tokens: [Int]) -> String {
         tokenizer.decode(tokens: tokens).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 

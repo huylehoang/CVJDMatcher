@@ -14,7 +14,7 @@ protocol ReasoningService: AnyObject {
     var onPartialExplanation: ((String) -> Void)? { get set }
     var constructPrompt: ConstructPrompt { get set }
     func loadModel() async throws
-    func explain(jd: String, cv: String) throws -> String
+    func explain(jd: String, cv: String) async throws -> String
 }
 
 extension ReasoningService {

@@ -62,7 +62,7 @@ final class LocalRAGService: RAGService {
     }
 
     /// Given a JD, find top-K matching CVs (above threshold) and generate explanations
-    func query(jd: String, onPartial: (([MatchResult]) -> Void)?) throws -> [MatchResult] {
+    func query(jd: String, onPartial: (([MatchResult]) -> Void)?) async throws -> [MatchResult] {
         // Embed the job description
         let jdVec = try embeddingService.embed(jd)
         // Score each CV embedding using cosine similarity
@@ -95,15 +95,38 @@ final class LocalRAGService: RAGService {
                 onPartial?(finalResults)
             }
             reasoningService.onPartialExplanation = onPartialExplanation
-            let explanation = try reasoningService.explain(jd: jd, cv: cv)
+            let explanation = try await reasoningService.explain(jd: jd, cv: cv)
             onPartialExplanation(explanation)
         }
         return finalResults
     }
 
     // MARK: - Cosine Similarity
-    /// Computes similarity between vectors A and B:
+    /// Computes cosine similarity between two embedding vectors A and B.
+    ///
+    /// Formula:
     /// similarity = (A ⋅ B) / (||A|| * ||B|| + ε)
+    ///
+    /// Where:
+    /// - A ⋅ B: dot product of vectors A and B
+    /// - ||A|| and ||B||: magnitudes (L2 norm) of the vectors
+    /// - ε: a small constant (1e-8) to avoid division by zero
+    ///
+    /// Cosine similarity returns a score between -1 and 1, where:
+    /// - 1 means the vectors are identical in direction (perfect match)
+    /// - 0 means the vectors are orthogonal (no relation)
+    /// - -1 means the vectors are opposite (opposite meaning)
+    ///
+    /// In this RAG flow:
+    /// - Each CV is embedded into a vector (using MiniLM).
+    /// - The job description (JD) is also embedded.
+    /// - We compute cosine similarity between the JD vector and each CV vector.
+    /// - The higher the score, the more semantically similar the CV is to the JD.
+    ///
+    /// Example:
+    /// - JD: "Looking for iOS Developer with Swift, Combine"
+    /// - CV1: "Senior iOS Engineer with Swift and MVVM"
+    /// - Cosine similarity score ≈ 0.89 → likely a match.
     private func cosine(_ a: [Double], _ b: [Double]) -> Double {
         let dot = zip(a, b).map(*).reduce(0, +)
         let magA = sqrt(a.map { $0*$0 }.reduce(0, +))

@@ -12,8 +12,18 @@ struct MatchResult: Identifiable {
     let cv: String
     let score: Double
     let explanation: String
-    
+
     var scoreString: String {
         String(format: "%.2f%%", score * 100)
+    }
+
+    var resultDesciption: String {
+        """
+        \(cv)
+        
+        Fit Rate: \(scoreString)
+        
+        \(explanation)
+        """
     }
 }

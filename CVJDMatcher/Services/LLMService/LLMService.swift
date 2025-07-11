@@ -8,25 +8,25 @@
 import CoreML
 
 /// Abstraction for generating explanations from a reasoning model.
-protocol ReasoningService: AnyObject {
+protocol LLMService: AnyObject {
     typealias ConstructPrompt = (String, String) -> String
     /// Optional callback to report intermediate explanation tokens and their timing
-    var onPartialExplanation: ((String) -> Void)? { get set }
-    var constructPrompt: ConstructPrompt { get set }
+    var onPartialOuput: ((String) -> Void)? { get set }
     func loadModel() async throws
-    func explain(jd: String, cv: String) async throws -> String
+    func generate(prompt: String) async throws -> String
 }
 
-extension ReasoningService {
-    var onPartialExplanation: ((String) -> Void)? {
+extension LLMService {
+    var onPartialOuput: ((String) -> Void)? {
         get { return nil }
         set { /* ignore if not implemented */ }
     }
 }
 
 /// Errors related to Core ML model loading or inference failures.
-enum ReasoningError: Error, LocalizedError {
+enum LLMError: Error, LocalizedError {
     case modelNotFound
+    case tokenizerNotFound
     case predictionFailed
     case outputMissing
     case invalidInput
@@ -36,6 +36,8 @@ enum ReasoningError: Error, LocalizedError {
         switch self {
         case .modelNotFound:
             "Core ML reasoning model not found."
+        case .tokenizerNotFound:
+            "Tokenizer not found."
         case .predictionFailed:
             "Failed to run prediction with reasoning model."
         case .outputMissing:

@@ -11,25 +11,25 @@ import Foundation
 /// 1. Embeds job description and CVs
 /// 2. Splits (chunks) long CVs to embed more effectively
 /// 3. Calculates cosine similarity, filters by threshold, and picks top matches
-/// 4. Uses an LLM-based ReasoningService to explain each match, with partial updates
+/// 4. Uses an LLM-based LLMService to explain each match, with partial updates
 final class LocalRAGService: RAGService {
     private var embeddings: [[Double]] = []
     private var cvs: [String] = []
     private let embeddingService: EmbeddingService
-    private let reasoningService: ReasoningService
+    private let llmService: LLMService
     private let chunker: Chunker
     private let topK: Int
     private let minScore: Double
 
     init(
         embeddingService: EmbeddingService = MiniLMEmbeddingService(),
-        reasoningService: ReasoningService = Llama2ReasoningService(),
+        llmService: LLMService = TokenBasedLLMService.llama_2_7b_chat,
         chunker: Chunker = SlidingWindowChunker(),
         topK: Int = 1,
         minScore: Double = 0.8
     ) {
         self.embeddingService = embeddingService
-        self.reasoningService = reasoningService
+        self.llmService = llmService
         self.chunker = chunker
         self.topK = topK
         self.minScore = minScore
@@ -37,7 +37,7 @@ final class LocalRAGService: RAGService {
 
     func setup() async throws {
         try await embeddingService.loadModel()
-        try await reasoningService.loadModel()
+        try await llmService.loadModel()
     }
 
     /// Load and embed a list of CVs
@@ -95,8 +95,9 @@ final class LocalRAGService: RAGService {
                 )
                 onPartial?(finalResults)
             }
-            reasoningService.onPartialExplanation = onPartialExplanation
-            let explanation = try await reasoningService.explain(jd: jd, cv: cv)
+            llmService.onPartialOuput = onPartialExplanation
+            let prompt = constructPrompt(jd: jd, cv: cv, scoreString: result.scoreString)
+            let explanation = try await llmService.generate(prompt: prompt)
             onPartialExplanation(explanation)
         }
         return finalResults
@@ -133,5 +134,23 @@ final class LocalRAGService: RAGService {
         let magA = sqrt(a.map { $0*$0 }.reduce(0, +))
         let magB = sqrt(b.map { $0*$0 }.reduce(0, +))
         return dot / (magA * magB + 1e-8)
+    }
+
+    private func constructPrompt(jd: String, cv: String, scoreString: String) -> String {
+        """
+        You are a system that analyzes whether a Candidate CV fits a Job Description.
+
+        Based on the similarity score of \(scoreString), explain why the Candidate CV is \
+        (or is not) a good match for the job. Focus only on technical fit \
+        (skills, tools, experience). Keep your reasoning aligned with the given score.
+
+        Job Description:
+        \(jd)
+
+        Candidate CV:
+        \(cv)
+
+        Now explain:
+        """
     }
 }

@@ -19,9 +19,9 @@ struct Utils {
     }
 
     /// Time a block in seconds and return (output, time)
-    static func time<T>(_ block: () -> T) -> (T, Double) {
+    static func time<T>(_ block: () throws -> T) throws -> (T, Double) {
         let startTime = CFAbsoluteTimeGetCurrent()
-        let result = block()
+        let result = try block()
         let diff = CFAbsoluteTimeGetCurrent() - startTime
         return (result, diff)
     }

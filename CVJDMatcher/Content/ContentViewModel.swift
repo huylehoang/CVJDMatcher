@@ -62,7 +62,7 @@ final class ContentViewModel: ObservableObject {
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             do {
-                try await self.ragService.loadModels()
+                try await self.ragService.setup()
                 try await self.ragService.loadData(self.cvs)
                 let matchResults = try await self.ragService.query(jd: self.jd) { matchResuls in
                     DispatchQueue.main.async {

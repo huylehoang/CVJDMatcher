@@ -6,7 +6,7 @@
 //
 
 protocol RAGService {
-    func loadModels() async throws
+    func setup() async throws
     func loadData(_ cvs: [String]) throws
     func query(jd: String, onPartial: (([MatchResult]) -> Void)?) async throws -> [MatchResult]
 }

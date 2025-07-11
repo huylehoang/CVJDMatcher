@@ -35,7 +35,7 @@ final class LocalRAGService: RAGService {
         self.minScore = minScore
     }
 
-    func loadModels() async throws {
+    func setup() async throws {
         try await embeddingService.loadModel()
         try await reasoningService.loadModel()
     }
@@ -84,6 +84,7 @@ final class LocalRAGService: RAGService {
         var finalResults = [MatchResult]()
         for result in results {
             finalResults.append(result)
+            onPartial?(finalResults)
             let cv = result.cv
             // Called when partial explanation is generated
             let onPartialExplanation: (String) -> Void = { explanation in

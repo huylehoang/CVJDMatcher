@@ -85,12 +85,12 @@ final class Llama2ReasoningService: ReasoningService {
             let (nextToken, time) = Utils.time {
                 return predictNextToken(from: tokens)
             }
-            if nextToken == tokenizer.eosTokenId {
-                print("----------------------------------------------------")
-                print("✋ <\(time)s>: stop early due to eos", i, nextToken, tokens.count)
-                print("----------------------------------------------------\n\n")
-                break
-            }
+//            if nextToken == tokenizer.eosTokenId {
+//                print("----------------------------------------------------")
+//                print("✋ <\(time)s>: stop early due to eos", i, nextToken, tokens.count)
+//                print("----------------------------------------------------\n\n")
+//                break
+//            }
             tokens.append(nextToken)
             newTokens.append(nextToken)
             let prediction = decode(tokens: newTokens)

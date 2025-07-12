@@ -19,20 +19,17 @@ final class LocalRAGService: RAGService {
     private let llmService: LLMService
     private let chunker: Chunker
     private let topK: Int
-    private let minScore: Double
 
     init(
         embeddingService: EmbeddingService = MiniLMEmbeddingService(),
         llmService: LLMService = MediaPipeLLMService.gemma_2b_it_cpu_int8,
         chunker: Chunker = SlidingWindowChunker(),
-        topK: Int = 1,
-        minScore: Double = 0.8
+        topK: Int = 3
     ) {
         self.embeddingService = embeddingService
         self.llmService = llmService
         self.chunker = chunker
         self.topK = topK
-        self.minScore = minScore
     }
 
     func setup() async throws {
@@ -66,41 +63,20 @@ final class LocalRAGService: RAGService {
         // Embed the job description
         let jdVec = try embeddingService.embed(jd)
         // Score each CV embedding using cosine similarity
-        let results = embeddings
+        let matchResults = embeddings
             .enumerated()
-            .compactMap { (i, vec) -> MatchResult? in
-                let score = cosine(jdVec, vec)
-                guard score >= minScore else {
-                    return nil
-                }
-                return MatchResult(cv: cvs[i], score: score, explanation: "")
-            }
+            .map { MatchResult(cv: cvs[$0], score: cosine(jdVec, $1)) }
             .sorted { $0.score > $1.score } // Sort by descending score
             .prefix(topK) // pick top K
-        if results.isEmpty {
+        if matchResults.isEmpty {
             // Return placeholder if no matches found
             return "No CVs Founded"
         }
-        var finalResults = [MatchResult]()
-        for result in results {
-            finalResults.append(result)
-            onPartial?(finalResults.description)
-            let cv = result.cv
-            // Called when partial explanation is generated
-            let onPartialOuput: (String) -> Void = { explanation in
-                finalResults[finalResults.count - 1] = MatchResult(
-                    cv: cv,
-                    score: result.score,
-                    explanation: explanation
-                )
-                onPartial?(finalResults.description)
-            }
-            llmService.onPartialOuput = onPartialOuput
-            let prompt = constructPrompt(jd: jd, cv: cv, scoreString: result.scoreString)
-            let explanation = try await llmService.generate(prompt: prompt)
-            onPartialOuput(explanation)
+        llmService.onPartialOuput = { output in
+            onPartial?(output.cleanedOutput)
         }
-        return finalResults.description
+        let prompt = constructPrompt(jd: jd, results: Array(matchResults), topK: topK)
+        return try await llmService.generate(prompt: prompt).cleanedOutput
     }
 
     // MARK: - Cosine Similarity
@@ -130,33 +106,42 @@ final class LocalRAGService: RAGService {
     /// - CV1: "Senior iOS Engineer with Swift and MVVM"
     /// - Cosine similarity score ≈ 0.89 → likely a match.
     private func cosine(_ a: [Double], _ b: [Double]) -> Double {
-        let dot = zip(a, b).map(*).reduce(0, +)
-        let magA = sqrt(a.map { $0*$0 }.reduce(0, +))
-        let magB = sqrt(b.map { $0*$0 }.reduce(0, +))
-        return dot / (magA * magB + 1e-8)
+        func normalize(_ v: [Double]) -> [Double] {
+            let mag = sqrt(v.map { $0 * $0 }.reduce(0, +)) + 1e-8
+            return v.map { $0 / mag }
+        }
+        let na = normalize(a)
+        let nb = normalize(b)
+        return zip(na, nb).map(*).reduce(0, +)
     }
 
-    private func constructPrompt(jd: String, cv: String, scoreString: String) -> String {
+    private func constructPrompt(jd: String, results: [MatchResult], topK: Int) -> String {
         """
-        You are a system that analyzes whether a Candidate CV fits a Job Description.
-
-        Based on the similarity score of \(scoreString), explain why the Candidate CV is \
-        (or is not) a good match for the job. Focus only on technical fit \
-        (skills, tools, experience). Keep your reasoning aligned with the given score.
-
+        You are an expert technical recruiter. Here's a job description and \(topK) candidates. \
+        Who is the best fit? Why?
+        
         Job Description:
         \(jd)
-
-        Candidate CV:
-        \(cv)
-
-        Now explain:
+        
+        \(results.candidateBlocks)
+        
+        Please summarize strengths and weaknesses of each, and name the best candidate.
         """
     }
 }
 
+extension String {
+    var cleanedOutput: String {
+        replacingOccurrences(of: "*", with: "")
+    }
+}
+
 private extension [MatchResult] {
-    var description: String {
-        map { $0.resultDesciption }.joined(separator: "\n")
+    var candidateBlocks: String {
+        enumerated()
+            .map { (index, result) in
+                "Candidate \(index + 1): \(result.cv.replacingOccurrences(of: "\n", with: " "))"
+            }
+            .joined(separator: "\n\n")
     }
 }

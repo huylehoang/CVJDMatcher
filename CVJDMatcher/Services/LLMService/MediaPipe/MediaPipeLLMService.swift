@@ -11,7 +11,7 @@ import Foundation
 final class MediaPipeLLMService: LLMService {
     private let modelName: String
     private let bundle: Bundle
-    private var llmInference: LlmInference?
+    private var modelPath: String?
 
     var onPartialOuput: ((String) -> Void)?
 
@@ -24,21 +24,24 @@ final class MediaPipeLLMService: LLMService {
         guard let url = bundle.url(forResource: modelName, withExtension: ".bin") else {
             throw LLMError.modelNotFound
         }
-        let modelPath = url.path()
+        modelPath = url.path()
+    }
+
+    func generate(prompt: String) async throws -> String {
+        guard let modelPath else {
+            throw LLMError.modelNotFound
+        }
         let options = LlmInference.Options(modelPath: modelPath)
         options.maxTokens = 512
         options.maxTopk = 40
         options.waitForWeightUploads = true
         options.useSubmodel = false
         options.sequenceBatchSize = 1
-        llmInference = try LlmInference(options: options)
-    }
-
-    func generate(prompt: String) async throws -> String {
-        guard let llmInference else {
-            throw LLMError.modelNotFound
-        }
+        let llmInference = try LlmInference(options: options)
         let stream = llmInference.generateResponseAsync(inputText: prompt)
+        print("----------------------------------------------------")
+        print(" ⚡️ Prompt: \(prompt)")
+        print("----------------------------------------------------\n\n")
         var result = ""
         for try await prediction in stream {
             result += prediction

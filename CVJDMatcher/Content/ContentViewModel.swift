@@ -69,6 +69,9 @@ final class ContentViewModel: ObservableObject {
                         self.result = result
                     }
                 }
+                print("----------------------------------------------------")
+                print("🦄 Result: \(result)")
+                print("----------------------------------------------------\n\n")
                 await MainActor.run {
                     self.result = result
                 }

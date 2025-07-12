@@ -38,7 +38,7 @@ echo "🚀 Running all-MiniLM-L6-v2 model conversion script..."
 if python download_and_convert_mini_lm_model.py; then
     echo "🎉 Done: Mini_LM model saved"
 else
-    echo "❌ Embedding model conversion failed"
+    echo "❌ Mini_LM model conversion failed"
     exit 1
 fi
 

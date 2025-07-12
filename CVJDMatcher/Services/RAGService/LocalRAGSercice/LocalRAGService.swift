@@ -23,7 +23,7 @@ final class LocalRAGService: RAGService {
 
     init(
         embeddingService: EmbeddingService = MiniLMEmbeddingService(),
-        llmService: LLMService = TokenBasedLLMService.llama_2_7b_chat,
+        llmService: LLMService = MediaPipeLLMService.gemma_2b_it_cpu_int8,
         chunker: Chunker = SlidingWindowChunker(),
         topK: Int = 1,
         minScore: Double = 0.8
@@ -62,7 +62,7 @@ final class LocalRAGService: RAGService {
     }
 
     /// Given a JD, find top-K matching CVs (above threshold) and generate explanations
-    func query(jd: String, onPartial: (([MatchResult]) -> Void)?) async throws -> [MatchResult] {
+    func query(jd: String, onPartial: ((String) -> Void)?) async throws -> String {
         // Embed the job description
         let jdVec = try embeddingService.embed(jd)
         // Score each CV embedding using cosine similarity
@@ -79,28 +79,28 @@ final class LocalRAGService: RAGService {
             .prefix(topK) // pick top K
         if results.isEmpty {
             // Return placeholder if no matches found
-            return [MatchResult(cv: "No CVs Founded", score: 0.0, explanation: "")]
+            return "No CVs Founded"
         }
         var finalResults = [MatchResult]()
         for result in results {
             finalResults.append(result)
-            onPartial?(finalResults)
+            onPartial?(finalResults.description)
             let cv = result.cv
             // Called when partial explanation is generated
-            let onPartialExplanation: (String) -> Void = { explanation in
+            let onPartialOuput: (String) -> Void = { explanation in
                 finalResults[finalResults.count - 1] = MatchResult(
                     cv: cv,
                     score: result.score,
                     explanation: explanation
                 )
-                onPartial?(finalResults)
+                onPartial?(finalResults.description)
             }
-            llmService.onPartialOuput = onPartialExplanation
+            llmService.onPartialOuput = onPartialOuput
             let prompt = constructPrompt(jd: jd, cv: cv, scoreString: result.scoreString)
             let explanation = try await llmService.generate(prompt: prompt)
-            onPartialExplanation(explanation)
+            onPartialOuput(explanation)
         }
-        return finalResults
+        return finalResults.description
     }
 
     // MARK: - Cosine Similarity
@@ -152,5 +152,11 @@ final class LocalRAGService: RAGService {
 
         Now explain:
         """
+    }
+}
+
+private extension [MatchResult] {
+    var description: String {
+        map { $0.resultDesciption }.joined(separator: "\n")
     }
 }

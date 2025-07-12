@@ -63,13 +63,13 @@ final class SwiftTransformerLLMService: LLMService {
         let result = try await languageModel.generate(
             config: config,
             prompt: prompt,
-            callback: { [weak self] explanation in
+            callback: { [weak self] prediction in
                 guard let self else { return }
-                let explanation = explanation.removingPrompt()
+                let prediction = prediction.removingPrompt()
                 print("----------------------------------------------------")
-                print("🦄 Partial explanation: \(explanation)")
+                print("🦄 Prediction: \(prediction)")
                 print("----------------------------------------------------\n\n")
-                self.onPartialOuput?(explanation)
+                self.onPartialOuput?(prediction)
             }
         )
         return result.removingPrompt()

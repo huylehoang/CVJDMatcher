@@ -35,3 +35,8 @@ Package.resolved
 *.mlmodelc
 *.mlpackage
 *.json
+CoreMLModels/
+
+# --- ⛔️ Ignore CocoaPods dependencies ---
+Pods/
+Podfile.lock

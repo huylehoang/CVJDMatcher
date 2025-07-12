@@ -11,7 +11,7 @@ import Combine
 @MainActor
 final class ContentViewModel: ObservableObject {
     private let ragService: RAGService
-    @Published var matchResults = [MatchResult]()
+    @Published var result: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
     let jd = """
@@ -64,13 +64,13 @@ final class ContentViewModel: ObservableObject {
             do {
                 try await self.ragService.setup()
                 try await self.ragService.loadData(self.cvs)
-                let matchResults = try await self.ragService.query(jd: self.jd) { matchResuls in
+                let result = try await self.ragService.query(jd: self.jd) { result in
                     DispatchQueue.main.async {
-                        self.matchResults = matchResuls
+                        self.result = result
                     }
                 }
                 await MainActor.run {
-                    self.matchResults = matchResults
+                    self.result = result
                 }
             } catch {
                 await MainActor.run {

@@ -8,10 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 2460C68B2E1B8375003E4E2E /* Transformers */; };
+		45AA0591B6F1259A2612D633 /* Pods_CVJDMatcher.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		245A7BCB2E123CDD00936155 /* CVJDMatcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CVJDMatcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CVJDMatcher.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE8A70EF820C37DDA286714E /* Pods-CVJDMatcher.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CVJDMatcher.debug.xcconfig"; path = "Target Support Files/Pods-CVJDMatcher/Pods-CVJDMatcher.debug.xcconfig"; sourceTree = "<group>"; };
+		DB759A22A32D6CA38C778899 /* Pods-CVJDMatcher.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CVJDMatcher.release.xcconfig"; path = "Target Support Files/Pods-CVJDMatcher/Pods-CVJDMatcher.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -28,6 +32,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */,
+				45AA0591B6F1259A2612D633 /* Pods_CVJDMatcher.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -39,6 +44,8 @@
 			children = (
 				245A7BCD2E123CDD00936155 /* CVJDMatcher */,
 				245A7BCC2E123CDD00936155 /* Products */,
+				C24669ABA4D2229516A0F928 /* Pods */,
+				B01257F6B81C387391347C6B /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -50,6 +57,23 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		B01257F6B81C387391347C6B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C24669ABA4D2229516A0F928 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				CE8A70EF820C37DDA286714E /* Pods-CVJDMatcher.debug.xcconfig */,
+				DB759A22A32D6CA38C778899 /* Pods-CVJDMatcher.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -57,6 +81,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 245A7BD62E123CDE00936155 /* Build configuration list for PBXNativeTarget "CVJDMatcher" */;
 			buildPhases = (
+				1BB1C86136F44D78D7A23A2F /* [CP] Check Pods Manifest.lock */,
 				245A7BC72E123CDD00936155 /* Sources */,
 				245A7BC82E123CDD00936155 /* Frameworks */,
 				245A7BC92E123CDD00936155 /* Resources */,
@@ -122,6 +147,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1BB1C86136F44D78D7A23A2F /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-CVJDMatcher-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		245A7BC72E123CDD00936155 /* Sources */ = {
@@ -257,6 +307,7 @@
 		};
 		245A7BD72E123CDE00936155 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CE8A70EF820C37DDA286714E /* Pods-CVJDMatcher.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -286,6 +337,7 @@
 		};
 		245A7BD82E123CDE00936155 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DB759A22A32D6CA38C778899 /* Pods-CVJDMatcher.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

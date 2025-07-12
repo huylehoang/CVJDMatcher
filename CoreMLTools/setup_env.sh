@@ -60,6 +60,12 @@ else
     exit 1
 fi
 
+# === Download Universal Sentence Encoder model ===
+echo "▶️ Downloading Gemma 2b IT CPU Int8 model..."
+./download_gemma_2b_it_cpu_int8_model.sh
+
+echo "🎉 Done: Gemma 2b IT CPU Int8 model saved"
+
 # === Cleanup virtual env ===
 echo "🧹 Cleaning up virtual environment..."
 deactivate

@@ -32,11 +32,11 @@ struct ContentView: View {
                     }
                 }
                 // Match results
-                ForEach(viewModel.matchResults) { matchResult in
+                if let result = viewModel.result {
                     Section {
                         VStack(alignment: .leading, spacing: 6) {
                             MatchResultDescriptionText(
-                                text: matchResult.resultDesciption,
+                                text: result,
                                 isLoading: viewModel.isLoading
                             )
                         }
@@ -44,7 +44,7 @@ struct ContentView: View {
                     }
                 }
                 // Loading indicator shown at bottom of list
-                if viewModel.isLoading && viewModel.matchResults.isEmpty {
+                if viewModel.isLoading && viewModel.result == nil {
                     Section {
                         HStack {
                             Spacer()

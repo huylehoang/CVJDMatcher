@@ -41,6 +41,14 @@ else
     echo "❌ Mini_LM model conversion failed"
     exit 1
 fi
+# === Run stsb-roberta-large model conversion ===
+echo "🚀 Running stsb-roberta-large model conversion script..."
+if python download_and_convert_stsb_roberta_large_model.py; then
+    echo "🎉 Done: stsb-roberta-large model saved"
+else
+    echo "❌ stsb-roberta-large model conversion failed"
+    exit 1
+fi
 
 # === Run Llama2 model conversion ===
 echo "🚀 Running Llama2 model conversion script..."

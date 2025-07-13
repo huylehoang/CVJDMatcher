@@ -13,7 +13,7 @@ protocol LLMService: AnyObject {
     /// Optional callback to report intermediate explanation tokens and their timing
     var onPartialOuput: ((String) -> Void)? { get set }
     func loadModel() async throws
-    func generate(prompt: String) async throws -> String
+    func generateResponse(for prompt: String) async throws -> String
 }
 
 extension LLMService {

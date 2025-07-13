@@ -6,13 +6,19 @@
 //
 
 protocol RAGService {
+    /// Prepare model or resources before usage.
     func setup() async throws
-    func loadData(_ cvs: [String]) throws
-    func query(jd: String, onPartial: ((String) -> Void)?) async throws -> String
+    /// Load documents/text chunks into the vector store.
+    func indexData(_ data: [String]) throws
+    /// Process query text and return generated response.
+    /// - Parameters:
+    ///   - query: input text for retrieval
+    ///   - onPartial: optional callback for streaming partial outputs
+    func generateReponse(for query: String, onPartial: ((String) -> Void)?) async throws -> String
 }
 
 extension RAGService {
-    func query(jd: String) async throws -> String {
-        try await query(jd: jd, onPartial: nil)
+    func generateReponse(for query: String) async throws -> String {
+        try await generateReponse(for: query, onPartial: nil)
     }
 }

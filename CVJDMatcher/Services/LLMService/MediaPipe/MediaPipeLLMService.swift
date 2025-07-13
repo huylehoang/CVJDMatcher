@@ -11,13 +11,15 @@ import Foundation
 final class MediaPipeLLMService: LLMService {
     private let modelName: String
     private let bundle: Bundle
+    private let generateTimeout: TimeInterval
     private var modelPath: String?
 
     var onPartialOuput: ((String) -> Void)?
 
-    init(modelName: String, bundle: Bundle = .main) {
+    init(modelName: String, bundle: Bundle = .main, generateTimeout: TimeInterval = 60) {
         self.modelName = modelName
         self.bundle = bundle
+        self.generateTimeout = generateTimeout
     }
 
     func loadModel() async throws {
@@ -27,7 +29,7 @@ final class MediaPipeLLMService: LLMService {
         modelPath = url.path()
     }
 
-    func generate(prompt: String) async throws -> String {
+    func generateResponse(for prompt: String) async throws -> String {
         guard let modelPath else {
             throw LLMError.modelNotFound
         }
@@ -43,14 +45,46 @@ final class MediaPipeLLMService: LLMService {
         print(" ⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")
         var result = ""
-        for try await prediction in stream {
-            result += prediction
-            print("----------------------------------------------------")
-            print("🦄 Prediction: \(result)")
-            print("----------------------------------------------------\n\n")
-            onPartialOuput?(result.trimmingCharacters(in: .whitespacesAndNewlines))
+        // Race between stream processing and timeout
+        return try await withThrowingTaskGroup(of: String.self) { [weak self] group in
+            group.addTask {
+                // Task to read stream
+                for try await prediction in stream {
+                    result += prediction
+                    try Task.checkCancellation()
+                    print("----------------------------------------------------")
+                    print("🦄 Prediction: \(result)")
+                    print("----------------------------------------------------\n\n")
+                    self?.onPartialOuput?(result.cleanedMediaPipeLLMOutput)
+                }
+                return result
+            }
+            group.addTask {
+                guard let self else {
+                    throw TimeoutError()
+                }
+                try await Task.sleep(nanoseconds: UInt64(self.generateTimeout * 1_000_000_000))
+                throw TimeoutError()
+            }
+            defer {
+                group.cancelAll()
+            }
+            do {
+                let output = try await group.next()!
+                return output.cleanedMediaPipeLLMOutput
+            } catch is TimeoutError {
+                return result.cleanedMediaPipeLLMOutput
+            }
         }
-        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private struct TimeoutError: Error {}
+}
+
+private extension String {
+    var cleanedMediaPipeLLMOutput: String {
+        replacingOccurrences(of: "*", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

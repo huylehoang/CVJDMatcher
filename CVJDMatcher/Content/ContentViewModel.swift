@@ -63,8 +63,8 @@ final class ContentViewModel: ObservableObject {
             guard let self else { return }
             do {
                 try await self.ragService.setup()
-                try await self.ragService.loadData(self.cvs)
-                let result = try await self.ragService.query(jd: self.jd) { result in
+                try await self.ragService.indexData(self.cvs)
+                let result = try await self.ragService.generateReponse(for: self.jd) { result in
                     DispatchQueue.main.async {
                         self.result = result
                     }

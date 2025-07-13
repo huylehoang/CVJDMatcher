@@ -53,7 +53,7 @@ final class TokenBasedLLMService: LLMService {
         print("----------------------------------------------------\n\n")
     }
 
-    func generate(prompt: String) async throws -> String {
+    func generateResponse(for prompt: String) async throws -> String {
         guard let tokenizer else {
             throw LLMError.tokenizerNotFound
         }

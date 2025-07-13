@@ -14,7 +14,7 @@ import Foundation
 /// 4. Uses an LLM-based LLMService to explain each match, with partial updates
 final class LocalRAGService: RAGService {
     private var embeddings: [[Double]] = []
-    private var cvs: [String] = []
+    private var data: [String] = []
     private let embeddingService: EmbeddingService
     private let llmService: LLMService
     private let chunker: Chunker
@@ -38,9 +38,9 @@ final class LocalRAGService: RAGService {
     }
 
     /// Load and embed a list of CVs
-    func loadData(_ cvs: [String]) throws {
-        self.cvs = cvs
-        embeddings = try cvs.map { cv in
+    func indexData(_ data: [String]) throws {
+        self.data = data
+        embeddings = try data.map { cv in
             // -- Split long CV into chunks for better embedding
             let chunks = try chunker.chunk(text: cv)
             if chunks.isEmpty {
@@ -59,89 +59,25 @@ final class LocalRAGService: RAGService {
     }
 
     /// Given a JD, find top-K matching CVs (above threshold) and generate explanations
-    func query(jd: String, onPartial: ((String) -> Void)?) async throws -> String {
+    func generateReponse(for query: String, onPartial: ((String) -> Void)?) async throws -> String {
         // Embed the job description
-        let jdVec = try embeddingService.embed(jd)
+        let jdVec = try embeddingService.embed(query)
         // Score each CV embedding using cosine similarity
         let matchResults = embeddings
             .enumerated()
-            .map { MatchResult(cv: cvs[$0], score: cosine(jdVec, $1)) }
+            .map { MatchResult(cv: data[$0], score: embeddingService.cosine(jdVec, $1)) }
             .sorted { $0.score > $1.score } // Sort by descending score
             .prefix(topK) // pick top K
         if matchResults.isEmpty {
             // Return placeholder if no matches found
             return "No CVs Founded"
         }
-        llmService.onPartialOuput = { output in
-            onPartial?(output.cleanedOutput)
-        }
-        let prompt = constructPrompt(jd: jd, results: Array(matchResults), topK: topK)
-        return try await llmService.generate(prompt: prompt).cleanedOutput
-    }
-
-    // MARK: - Cosine Similarity
-    /// Computes cosine similarity between two embedding vectors A and B.
-    ///
-    /// Formula:
-    /// similarity = (A ⋅ B) / (||A|| * ||B|| + ε)
-    ///
-    /// Where:
-    /// - A ⋅ B: dot product of vectors A and B
-    /// - ||A|| and ||B||: magnitudes (L2 norm) of the vectors
-    /// - ε: a small constant (1e-8) to avoid division by zero
-    ///
-    /// Cosine similarity returns a score between -1 and 1, where:
-    /// - 1 means the vectors are identical in direction (perfect match)
-    /// - 0 means the vectors are orthogonal (no relation)
-    /// - -1 means the vectors are opposite (opposite meaning)
-    ///
-    /// In this RAG flow:
-    /// - Each CV is embedded into a vector (using MiniLM).
-    /// - The job description (JD) is also embedded.
-    /// - We compute cosine similarity between the JD vector and each CV vector.
-    /// - The higher the score, the more semantically similar the CV is to the JD.
-    ///
-    /// Example:
-    /// - JD: "Looking for iOS Developer with Swift, Combine"
-    /// - CV1: "Senior iOS Engineer with Swift and MVVM"
-    /// - Cosine similarity score ≈ 0.89 → likely a match.
-    private func cosine(_ a: [Double], _ b: [Double]) -> Double {
-        func normalize(_ v: [Double]) -> [Double] {
-            let mag = sqrt(v.map { $0 * $0 }.reduce(0, +)) + 1e-8
-            return v.map { $0 / mag }
-        }
-        let na = normalize(a)
-        let nb = normalize(b)
-        return zip(na, nb).map(*).reduce(0, +)
-    }
-
-    private func constructPrompt(jd: String, results: [MatchResult], topK: Int) -> String {
-        """
-        You are an expert technical recruiter. Here's a job description and \(topK) candidates. \
-        Who is the best fit? Why?
-        
-        Job Description:
-        \(jd)
-        
-        \(results.candidateBlocks)
-        
-        Please summarize strengths and weaknesses of each, and name the best candidate.
-        """
-    }
-}
-
-extension String {
-    var cleanedOutput: String {
-        replacingOccurrences(of: "*", with: "")
-    }
-}
-
-private extension [MatchResult] {
-    var candidateBlocks: String {
-        enumerated()
-            .map { (index, result) in
-                "Candidate \(index + 1): \(result.cv.replacingOccurrences(of: "\n", with: " "))"
-            }
-            .joined(separator: "\n\n")
+        llmService.onPartialOuput = onPartial
+        let prompt = PromptProvider.multiCandidatePrompt(
+            jd: query,
+            results: Array(matchResults),
+            topK: topK
+        )
+        return try await llmService.generateResponse(for: prompt)
     }
 }

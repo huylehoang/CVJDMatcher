@@ -53,26 +53,34 @@ final class SwiftTransformerLLMService: LLMService {
         guard let languageModel else {
             throw LLMError.modelNotFound
         }
-        var config = generationConfig
-        config.eosTokenId = tokenizer.eosTokenId
-        config.bosTokenId = tokenizer.bosTokenId
         let prompt = prompt + "\n\(SwiftTransformerLLMService.marker)"
         print("----------------------------------------------------")
         print(" ⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")
-        let result = try await languageModel.generate(
-            config: config,
-            prompt: prompt,
-            callback: { [weak self] prediction in
-                guard let self else { return }
-                let prediction = prediction.removingPrompt()
-                print("----------------------------------------------------")
-                print("🦄 Prediction: \(prediction)")
-                print("----------------------------------------------------\n\n")
-                self.onPartialOuput?(prediction)
+        return try await withTimeout { [weak self] in
+            guard let self else {
+                throw LLMError.invalidOutput
             }
-        )
-        return result.removingPrompt()
+            var config = generationConfig
+            config.eosTokenId = tokenizer.eosTokenId
+            config.bosTokenId = tokenizer.bosTokenId
+            let result = try await languageModel.generate(
+                config: config,
+                prompt: prompt,
+                callback: { prediction in
+                    guard !Task.isCancelled else {
+                        print("🛑 Task was cancelled in \(Self.self)")
+                        return
+                    }
+                    let prediction = prediction.removingPrompt()
+                    print("----------------------------------------------------")
+                    print("🦄 Prediction: \(prediction)")
+                    print("----------------------------------------------------\n\n")
+                    self.onPartialOuput?(prediction)
+                }
+            )
+            return result.removingPrompt()
+        }
     }
 }
 

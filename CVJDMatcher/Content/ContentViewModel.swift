@@ -10,10 +10,11 @@ import Combine
 
 @MainActor
 final class ContentViewModel: ObservableObject {
-    private let ragService: RAGService
+    private let ragServiceProvider: RAGServiceProvider
     @Published var result: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
+    private var currentTask: Task<Void, Never>? // track running task
     let jd = """
     We are hiring a passionate iOS Developer to join our mobile team. \
     The ideal candidate should have:
@@ -43,12 +44,17 @@ final class ContentViewModel: ObservableObject {
         """
     ]
 
-    init(ragService: RAGService = StandardRAGService()) {
-        self.ragService = ragService
+    init(ragServiceProvider: RAGServiceProvider = DefaultRAGServiceProvider()) {
+        self.ragServiceProvider = ragServiceProvider
     }
 
     func runMatchingFlow() {
+        result = nil
+        errorMessage = nil
         isLoading = true
+        // Cancel previous task if running
+        currentTask?.cancel()
+        let ragService = ragServiceProvider.ragService
         // Use Task.detached to run CPU-heavy work off the main thread
 
         // What is Task.detached?
@@ -59,16 +65,19 @@ final class ContentViewModel: ObservableObject {
         // - Embedding + reasoning with Core ML is CPU-intensive
         // - We want to keep the UI responsive
         // - Detached task runs in background without violating MainActor rules
-        Task.detached(priority: .userInitiated) { [weak self] in
-            guard let self else { return }
+        currentTask = Task.detached(priority: .userInitiated) { [weak self] in
+            guard !Task.isCancelled, let self else { return }
             do {
-                try await self.ragService.setup()
-                try await self.ragService.indexData(self.cvs)
-                let result = try await self.ragService.generateReponse(for: self.jd) { result in
+                try await ragService.setup()
+                try Task.checkCancellation()
+                try ragService.indexData(self.cvs)
+                try Task.checkCancellation()
+                let result = try await ragService.generateReponse(for: self.jd) { result in
                     DispatchQueue.main.async {
                         self.result = result
                     }
                 }
+                try Task.checkCancellation()
                 print("----------------------------------------------------")
                 print("🦄 Result: \(result)")
                 print("----------------------------------------------------\n\n")

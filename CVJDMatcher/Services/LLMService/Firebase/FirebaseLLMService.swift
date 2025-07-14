@@ -26,18 +26,27 @@ final class FirebaseLLMService: LLMService {
         guard let model else {
             throw LLMError.modelNotFound
         }
-        var result = ""
-        let stream = try model.generateContentStream(prompt)
-        for try await chunk in stream {
-            if let part = chunk.text {
-                result += part
-                print("----------------------------------------------------")
-                print("🦄 Prediction: \(result)")
-                print("----------------------------------------------------\n\n")
-                onPartialOuput?(result)
+        return try await withTimeout { [weak self] in
+            guard let self else {
+                throw LLMError.invalidOutput
             }
+            var result = ""
+            let stream = try model.generateContentStream(prompt)
+            for try await chunk in stream {
+                if Task.isCancelled {
+                    print("🛑 Task was cancelled in \(Self.self)")
+                }
+                try Task.checkCancellation()
+                if let part = chunk.text {
+                    result += part
+                    print("----------------------------------------------------")
+                    print("🦄 Prediction: \(result)")
+                    print("----------------------------------------------------\n\n")
+                    onPartialOuput?(result)
+                }
+            }
+            return result
         }
-        return result
     }
 }
 

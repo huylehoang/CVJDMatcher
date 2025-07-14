@@ -62,22 +62,31 @@ final class TokenBasedLLMService: LLMService {
         print("----------------------------------------------------\n\n")
         input_ids_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
         attention_mask_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
-        var tokens = tokenizer.encode(text: prompt)
-        var newTokens = [Int]()
-        for i in 0..<maxNewTokens {
-            let (nextToken, time) = try Utils.time {
-                return try predictNextToken(from: tokens)
+        return try await withTimeout { [weak self] in
+            guard let self else {
+                throw LLMError.invalidOutput
             }
-            tokens.append(nextToken)
-            newTokens.append(nextToken)
-            let prediction = try decode(tokens: newTokens)
-            print("----------------------------------------------------")
-            print("🦄 <\(time)s>", i, nextToken, tokens.count)
-            print("🦄 Prediction: \(prediction)")
-            print("----------------------------------------------------\n\n")
-            onPartialOuput?(prediction)
+            var tokens = tokenizer.encode(text: prompt)
+            var newTokens = [Int]()
+            for i in 0..<maxNewTokens {
+                if Task.isCancelled {
+                    print("🛑 Task was cancelled in \(Self.self)")
+                }
+                try Task.checkCancellation()
+                let (nextToken, time) = try Utils.time {
+                    return try self.predictNextToken(from: tokens)
+                }
+                tokens.append(nextToken)
+                newTokens.append(nextToken)
+                let prediction = try decode(tokens: newTokens)
+                print("----------------------------------------------------")
+                print("🦄 <\(time)s>", i, nextToken, tokens.count)
+                print("🦄 Prediction: \(prediction)")
+                print("----------------------------------------------------\n\n")
+                onPartialOuput?(prediction)
+            }
+            return try decode(tokens: newTokens)
         }
-        return try decode(tokens: newTokens)
     }
 
     private func predictNextToken(from tokens: [Int]) throws -> Int {

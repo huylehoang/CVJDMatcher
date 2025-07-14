@@ -44,41 +44,23 @@ final class MediaPipeLLMService: LLMService {
         print("----------------------------------------------------")
         print(" ⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")
-        var result = ""
-        // Race between stream processing and timeout
-        return try await withThrowingTaskGroup(of: String.self) { [weak self] group in
-            group.addTask {
-                // Task to read stream
-                for try await prediction in stream {
-                    result += prediction
-                    try Task.checkCancellation()
-                    print("----------------------------------------------------")
-                    print("🦄 Prediction: \(result)")
-                    print("----------------------------------------------------\n\n")
-                    self?.onPartialOuput?(result)
+        return try await withTimeout { [weak self] in
+            var result = ""
+            for try await prediction in stream {
+                if Task.isCancelled {
+                    print("🛑 Task was cancelled in \(Self.self)")
                 }
-                return result
+                try Task.checkCancellation()
+                result += prediction
+                try Task.checkCancellation()
+                print("----------------------------------------------------")
+                print("🦄 Prediction: \(result)")
+                print("----------------------------------------------------\n\n")
+                self?.onPartialOuput?(result)
             }
-            group.addTask {
-                guard let self else {
-                    throw TimeoutError()
-                }
-                try await Task.sleep(nanoseconds: UInt64(self.generateTimeout * 1_000_000_000))
-                throw TimeoutError()
-            }
-            defer {
-                group.cancelAll()
-            }
-            do {
-                let output = try await group.next()!
-                return output
-            } catch is TimeoutError {
-                return result
-            }
+            return result
         }
     }
-
-    private struct TimeoutError: Error {}
 }
 
 extension MediaPipeLLMService  {

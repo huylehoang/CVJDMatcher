@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = ContentViewModel()
-    @State private var charIndexMap: [UUID: Int] = [:]
+    @State private var showSettings = false
+    private let analyzingText = " ● Analyzing..."
 
     var body: some View {
         NavigationView {
@@ -37,6 +38,7 @@ struct ContentView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             MatchResultDescriptionText(
                                 text: result,
+                                analyzingText: analyzingText,
                                 isLoading: viewModel.isLoading
                             )
                         }
@@ -46,18 +48,27 @@ struct ContentView: View {
                 // Loading indicator shown at bottom of list
                 if viewModel.isLoading && viewModel.result == nil {
                     Section {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Text("Analyzing...")
-                                .font(.system(size: 14))
-                            Spacer()
-                        }
+                        AnalyzingText(text: analyzingText)
                     }
                 }
             }
             .listStyle(.plain)
             .navigationTitle("CV Match Results")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gear")
+                            .foregroundStyle(.black)
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView {
+                    viewModel.runMatchingFlow()
+                }
+            }
             .onAppear {
                 viewModel.runMatchingFlow()
             }
@@ -65,23 +76,34 @@ struct ContentView: View {
     }
 }
 
+struct AnalyzingText: View {
+    let text: String
+    private let cursorTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    @State private var showCursor = true
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 14))
+            .foregroundColor(.gray.opacity(showCursor ? 0.6 : 0.15))
+            .onReceive(cursorTimer) { _ in
+                showCursor.toggle()
+            }
+    }
+}
+
 struct MatchResultDescriptionText: View {
-    private let text: String
-    private let isLoading: Bool
+    let text: String
+    let analyzingText: String
+    let isLoading: Bool
     private let cursorTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
     @State private var showCursor = true
     @State private var flash = false
-
-    init(text: String, isLoading: Bool = true) {
-        self.text = text
-        self.isLoading = isLoading
-    }
 
     var body: some View {
         var attrText = AttributedString(text)
         attrText.foregroundColor = .primary
         if isLoading {
-            var cursor = AttributedString(" ● Analyzing...")
+            var cursor = AttributedString(analyzingText)
             cursor.foregroundColor = .gray.opacity(showCursor ? 0.6 : 0.15)
             attrText.append(cursor)
         }
@@ -98,6 +120,60 @@ struct MatchResultDescriptionText: View {
             .onReceive(cursorTimer) { _ in
                 showCursor.toggle()
             }
+    }
+}
+
+struct SettingsView: View {
+    @Environment(\.dismiss) var dismiss
+
+    @State private var selectedLLM = AppEnvironment.shared.llmServiceType
+    @State private var selectedEmbedding = AppEnvironment.shared.embeddingServiceType
+
+    let onApply: () -> Void
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(
+                    header: Text("LLM Service")
+                        .font(.system(size: 18, weight: .bold))
+                ) {
+                    Picker("Model", selection: $selectedLLM) {
+                        ForEach(LLMServiceType.allCases, id: \.self) {
+                            Text($0.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section(
+                    header: Text("Embedding Service")
+                        .font(.system(size: 18, weight: .bold))
+                ) {
+                    Picker("Model", selection: $selectedEmbedding) {
+                        ForEach(EmbeddingServiceType.allCases, id: \.self) {
+                            Text($0.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+            }
+            .navigationTitle("Settings")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        AppEnvironment.shared.set(embeddingServiceType: selectedEmbedding)
+                        AppEnvironment.shared.set(llmServiceType: selectedLLM)
+                        dismiss()
+                        onApply()
+                    }
+                }
+            }
+        }
     }
 }
 

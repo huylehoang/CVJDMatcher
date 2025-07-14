@@ -55,7 +55,7 @@ final class MediaPipeLLMService: LLMService {
                     print("----------------------------------------------------")
                     print("🦄 Prediction: \(result)")
                     print("----------------------------------------------------\n\n")
-                    self?.onPartialOuput?(result.cleanedMediaPipeLLMOutput)
+                    self?.onPartialOuput?(result)
                 }
                 return result
             }
@@ -71,21 +71,14 @@ final class MediaPipeLLMService: LLMService {
             }
             do {
                 let output = try await group.next()!
-                return output.cleanedMediaPipeLLMOutput
+                return output
             } catch is TimeoutError {
-                return result.cleanedMediaPipeLLMOutput
+                return result
             }
         }
     }
 
     private struct TimeoutError: Error {}
-}
-
-private extension String {
-    var cleanedMediaPipeLLMOutput: String {
-        replacingOccurrences(of: "*", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 }
 
 extension MediaPipeLLMService  {

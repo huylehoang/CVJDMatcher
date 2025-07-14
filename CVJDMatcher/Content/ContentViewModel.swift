@@ -43,7 +43,7 @@ final class ContentViewModel: ObservableObject {
         """
     ]
 
-    init(ragService: RAGService = LocalRAGService()) {
+    init(ragService: RAGService = StandardRAGService()) {
         self.ragService = ragService
     }
 

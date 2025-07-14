@@ -1,5 +1,5 @@
 //
-//  LocalRAGService.swift
+//  StandardRAGService.swift
 //  CVJDMatcher
 //
 //  Created by Le Hoang Huy on 9/7/25.
@@ -12,7 +12,7 @@ import Foundation
 /// 2. Splits (chunks) long CVs to embed more effectively
 /// 3. Calculates cosine similarity, filters by threshold, and picks top matches
 /// 4. Uses an LLM-based LLMService to explain each match, with partial updates
-final class LocalRAGService: RAGService {
+final class StandardRAGService: RAGService {
     private var embeddings: [[Double]] = []
     private var data: [String] = []
     private let embeddingService: EmbeddingService
@@ -72,12 +72,23 @@ final class LocalRAGService: RAGService {
             // Return placeholder if no matches found
             return "No CVs Founded"
         }
-        llmService.onPartialOuput = onPartial
+        llmService.onPartialOuput = {
+            onPartial?($0.cleanedResponse)
+        }
         let prompt = PromptProvider.multiCandidatePrompt(
             jd: query,
             results: Array(matchResults),
             topK: topK
         )
-        return try await llmService.generateResponse(for: prompt)
+        let response = try await llmService.generateResponse(for: prompt)
+        return response.cleanedResponse
+    }
+}
+
+private extension String {
+    var cleanedResponse: String {
+        replacingOccurrences(of: "*", with: "")
+            .replacingOccurrences(of: "  ", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

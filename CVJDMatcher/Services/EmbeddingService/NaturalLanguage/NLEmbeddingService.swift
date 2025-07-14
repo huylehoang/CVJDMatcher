@@ -6,13 +6,17 @@
 //
 
 import NaturalLanguage
-import Accelerate
 
 final class NLEmbeddingService: EmbeddingService {
+    private let language: NLLanguage
     private var model: NLEmbedding?
 
+    init(language: NLLanguage) {
+        self.language = language
+    }
+
     func loadModel() async throws {
-        guard let model = NLEmbedding.sentenceEmbedding(for: .english) else {
+        guard let model = NLEmbedding.sentenceEmbedding(for: language) else {
             throw EmbeddingError.modelNotFound
         }
         self.model = model
@@ -26,5 +30,11 @@ final class NLEmbeddingService: EmbeddingService {
             throw EmbeddingError.invalidOutput
         }
         return vector
+    }
+}
+
+extension NLEmbeddingService {
+    static var forEnglish: EmbeddingService {
+        NLEmbeddingService(language: .english)
     }
 }

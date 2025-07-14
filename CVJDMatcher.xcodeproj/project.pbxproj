@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		244D3DC02E241A85002E64CC /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 244D3DBF2E241A85002E64CC /* FirebaseAI */; };
 		2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 2460C68B2E1B8375003E4E2E /* Transformers */; };
 		45AA0591B6F1259A2612D633 /* Pods_CVJDMatcher.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */; };
 /* End PBXBuildFile section */
@@ -33,6 +34,7 @@
 			files = (
 				2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */,
 				45AA0591B6F1259A2612D633 /* Pods_CVJDMatcher.framework in Frameworks */,
+				244D3DC02E241A85002E64CC /* FirebaseAI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +98,7 @@
 			name = CVJDMatcher;
 			packageProductDependencies = (
 				2460C68B2E1B8375003E4E2E /* Transformers */,
+				244D3DBF2E241A85002E64CC /* FirebaseAI */,
 			);
 			productName = CVJDMatcher;
 			productReference = 245A7BCB2E123CDD00936155 /* CVJDMatcher.app */;
@@ -127,6 +130,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				244D3DBE2E241A85002E64CC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 245A7BCC2E123CDD00936155 /* Products */;
@@ -389,6 +393,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		244D3DBE2E241A85002E64CC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.15.0;
+			};
+		};
 		2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/huggingface/swift-transformers";
@@ -400,6 +412,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		244D3DBF2E241A85002E64CC /* FirebaseAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 244D3DBE2E241A85002E64CC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAI;
+		};
 		2460C68B2E1B8375003E4E2E /* Transformers */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */;

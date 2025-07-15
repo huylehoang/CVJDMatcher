@@ -30,12 +30,12 @@ final class FirebaseLLMService: LLMService {
             guard let self else {
                 throw LLMError.invalidOutput
             }
+            print("----------------------------------------------------")
+            print("⚡️ Prompt: \(prompt)")
+            print("----------------------------------------------------\n\n")
             var result = ""
             let stream = try model.generateContentStream(prompt)
             for try await chunk in stream {
-                if Task.isCancelled {
-                    print("🛑 Task was cancelled in \(Self.self)")
-                }
                 try Task.checkCancellation()
                 if let part = chunk.text {
                     result += part

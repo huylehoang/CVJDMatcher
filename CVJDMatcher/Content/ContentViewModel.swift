@@ -99,13 +99,16 @@ final class ContentViewModel: ObservableObject {
         currentTask = Task.detached(priority: .userInitiated) { [weak self] in
             guard !Task.isCancelled, let self else { return }
             do {
+                print("⚡️ Run Matching Flow")
                 try await ragService.setup()
                 try Task.checkCancellation()
                 try ragService.indexData(self.cvs)
                 try Task.checkCancellation()
                 let result = try await ragService.generateReponse(for: self.jd) { result in
-                    DispatchQueue.main.async {
-                        self.result = result
+                    if !Task.isCancelled {
+                        DispatchQueue.main.async {
+                            self.result = result
+                        }
                     }
                 }
                 try Task.checkCancellation()
@@ -124,6 +127,7 @@ final class ContentViewModel: ObservableObject {
                     self.isLoading = false
                 }
             } catch {
+                print("⚠️ An error occurred: \(error.localizedDescription)")
                 await MainActor.run {
                     self.isLoading = false
                     self.errorMessage = error.localizedDescription

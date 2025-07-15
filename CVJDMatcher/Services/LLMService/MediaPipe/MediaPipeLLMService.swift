@@ -44,14 +44,11 @@ final class MediaPipeLLMService: LLMService {
         let llmInference = try LlmInference(options: options)
         let stream = llmInference.generateResponseAsync(inputText: prompt)
         print("----------------------------------------------------")
-        print(" ⚡️ Prompt: \(prompt)")
+        print("⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")
         return try await withTimeout { [weak self] in
             var result = ""
             for try await prediction in stream {
-                if Task.isCancelled {
-                    print("🛑 Task was cancelled in \(Self.self)")
-                }
                 try Task.checkCancellation()
                 result += prediction
                 print("----------------------------------------------------")

@@ -12,6 +12,12 @@ enum RAGServiceType: String, CaseIterable {
     case vectorDB
 }
 
+enum EmbeddingServiceType: String, CaseIterable {
+    case mini_lm
+    case natural_language_for_english
+    case stsb_roberta_large
+}
+
 enum LLMServiceType: String, CaseIterable {
     case media_pipe_gemma_2b_it_cpu_int8
     case firebase_gemini_1_5_flash
@@ -21,10 +27,9 @@ enum LLMServiceType: String, CaseIterable {
     case swift_transformer_tiny_llama
 }
 
-enum EmbeddingServiceType: String, CaseIterable {
-    case mini_lm
-    case natural_language_for_english
-    case stsb_roberta_large
+enum PromptServiceType: String, CaseIterable {
+    case v1
+    case v2
 }
 
 protocol RAGServiceProvider {
@@ -66,6 +71,15 @@ final class DefaultRAGServiceProvider: RAGServiceProvider {
         }
     }
 
+    private var promptService: PromptService {
+        switch appEnvironment.promptServiceType {
+        case .v1:
+            PromptServiceV1()
+        case .v2:
+            PromptServiceV2()
+        }
+    }
+
     private var vectorDB: VectorDatabase {
         switch appEnvironment.embeddingServiceType {
         case .mini_lm:
@@ -80,11 +94,16 @@ final class DefaultRAGServiceProvider: RAGServiceProvider {
     var ragService: RAGService {
         switch appEnvironment.ragServiceType {
         case .inMemory:
-            InMemoryRAGService(embeddingService: embeddingService, llmService: llmService)
+            InMemoryRAGService(
+                embeddingService: embeddingService,
+                llmService: llmService,
+                promptService: promptService
+            )
         case .vectorDB:
             VectorDBRAGService(
                 embeddingService: embeddingService,
                 llmService: llmService,
+                promptService: promptService,
                 vectorDB: vectorDB
             )
         }

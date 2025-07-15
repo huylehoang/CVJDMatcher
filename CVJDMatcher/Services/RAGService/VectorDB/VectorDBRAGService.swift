@@ -8,6 +8,7 @@
 final class VectorDBRAGService: RAGService {
     private let embeddingService: EmbeddingService
     private let llmService: LLMService
+    private let promptService: PromptService
     private let vectorDB: VectorDatabase
     private let chunker: Chunker
     private let topK: Int
@@ -15,12 +16,14 @@ final class VectorDBRAGService: RAGService {
     init(
         embeddingService: EmbeddingService = MiniLMEmbeddingService(),
         llmService: LLMService = MediaPipeLLMService.gemma_2b_it_cpu_int8,
+        promptService: PromptService = PromptServiceV1(),
         vectorDB: VectorDatabase = MiniLMVectorDatabase(),
         chunker: Chunker = SlidingWindowChunker(),
         topK: Int = 3
     ) {
         self.embeddingService = embeddingService
         self.llmService = llmService
+        self.promptService = promptService
         self.vectorDB = vectorDB
         self.chunker = chunker
         self.topK = topK
@@ -61,7 +64,7 @@ final class VectorDBRAGService: RAGService {
         llmService.onPartialOuput = {
             onPartial?($0.cleanedLLMResponse)
         }
-        let prompt = PromptProvider.multiCandidatePrompt(
+        let prompt = promptService.prompt(
             jd: query,
             cvs: topVectors.cvs,
             topK: topK

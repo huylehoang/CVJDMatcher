@@ -45,7 +45,7 @@ final class SwiftTransformerLLMService: LLMService {
             tokenizerData: languageModel.tokenizerData
         )
         print("----------------------------------------------------")
-        print(" ⚡️ Tokenizer: \(String(describing: tokenizer.self))")
+        print("⚡️ Tokenizer: \(String(describing: tokenizer.self))")
         print("----------------------------------------------------\n\n")
     }
 
@@ -55,7 +55,7 @@ final class SwiftTransformerLLMService: LLMService {
         }
         let prompt = prompt + "\n\(SwiftTransformerLLMService.marker)"
         print("----------------------------------------------------")
-        print(" ⚡️ Prompt: \(prompt)")
+        print("⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")
         return try await withTimeout { [weak self] in
             guard let self else {
@@ -69,7 +69,6 @@ final class SwiftTransformerLLMService: LLMService {
                 prompt: prompt,
                 callback: { prediction in
                     guard !Task.isCancelled else {
-                        print("🛑 Task was cancelled in \(Self.self)")
                         return
                     }
                     let prediction = prediction.removingPrompt()
@@ -116,10 +115,10 @@ extension SwiftTransformerLLMService {
         SwiftTransformerLLMService(
             modelName: "tiny_llama",
             generationConfig: GenerationConfig(
-                maxNewTokens: 120,
+                maxNewTokens: 512,
                 doSample: true,
-                temperature: 0.9,
-                topK: 40,
+                temperature: 0.8,
+                topK: 50,
                 topP: 0.95
             )
         )

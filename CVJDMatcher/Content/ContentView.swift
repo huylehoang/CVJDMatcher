@@ -125,9 +125,10 @@ struct MatchResultDescriptionText: View {
 
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var selectedRAG = AppEnvironment.shared.ragServiceType
-    @State private var selectedLLM = AppEnvironment.shared.llmServiceType
-    @State private var selectedEmbedding = AppEnvironment.shared.embeddingServiceType
+    @State private var ragServiceType = AppEnvironment.shared.ragServiceType
+    @State private var embeddingServiceType = AppEnvironment.shared.embeddingServiceType
+    @State private var llmServiceType = AppEnvironment.shared.llmServiceType
+    @State private var promptServiceType = AppEnvironment.shared.promptServiceType
 
     let onApply: () -> Void
 
@@ -138,19 +139,8 @@ struct SettingsView: View {
                     header: Text("RAG Service")
                         .font(.system(size: 18, weight: .bold))
                 ) {
-                    Picker("Type", selection: $selectedRAG) {
+                    Picker("Type", selection: $ragServiceType) {
                         ForEach(RAGServiceType.allCases, id: \.self) {
-                            Text($0.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-                Section(
-                    header: Text("LLM Service")
-                        .font(.system(size: 18, weight: .bold))
-                ) {
-                    Picker("Model", selection: $selectedLLM) {
-                        ForEach(LLMServiceType.allCases, id: \.self) {
                             Text($0.rawValue)
                         }
                     }
@@ -160,8 +150,30 @@ struct SettingsView: View {
                     header: Text("Embedding Service")
                         .font(.system(size: 18, weight: .bold))
                 ) {
-                    Picker("Model", selection: $selectedEmbedding) {
+                    Picker("Model", selection: $embeddingServiceType) {
                         ForEach(EmbeddingServiceType.allCases, id: \.self) {
+                            Text($0.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section(
+                    header: Text("LLM Service")
+                        .font(.system(size: 18, weight: .bold))
+                ) {
+                    Picker("Model", selection: $llmServiceType) {
+                        ForEach(LLMServiceType.allCases, id: \.self) {
+                            Text($0.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                Section(
+                    header: Text("Prompt Service")
+                        .font(.system(size: 18, weight: .bold))
+                ) {
+                    Picker("Type", selection: $promptServiceType) {
+                        ForEach(PromptServiceType.allCases, id: \.self) {
                             Text($0.rawValue)
                         }
                     }
@@ -177,8 +189,10 @@ struct SettingsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
-                        AppEnvironment.shared.set(embeddingServiceType: selectedEmbedding)
-                        AppEnvironment.shared.set(llmServiceType: selectedLLM)
+                        AppEnvironment.shared.set(ragServiceType: ragServiceType)
+                        AppEnvironment.shared.set(embeddingServiceType: embeddingServiceType)
+                        AppEnvironment.shared.set(llmServiceType: llmServiceType)
+                        AppEnvironment.shared.set(promptServiceType: promptServiceType)
                         dismiss()
                         onApply()
                     }

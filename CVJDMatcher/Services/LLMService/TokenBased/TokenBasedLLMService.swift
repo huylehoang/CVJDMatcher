@@ -49,7 +49,7 @@ final class TokenBasedLLMService: LLMService {
         )
         seqLen = model.seqLen ?? 64
         print("----------------------------------------------------")
-        print(" ⚡️ Tokenizer: \(String(describing: tokenizer.self))")
+        print("⚡️ Tokenizer: \(String(describing: tokenizer.self))")
         print("----------------------------------------------------\n\n")
     }
 
@@ -58,7 +58,7 @@ final class TokenBasedLLMService: LLMService {
             throw LLMError.tokenizerNotFound
         }
         print("----------------------------------------------------")
-        print(" ⚡️ Prompt: \(prompt)")
+        print("⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")
         input_ids_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
         attention_mask_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
@@ -69,13 +69,11 @@ final class TokenBasedLLMService: LLMService {
             var tokens = tokenizer.encode(text: prompt)
             var newTokens = [Int]()
             for i in 0..<maxNewTokens {
-                if Task.isCancelled {
-                    print("🛑 Task was cancelled in \(Self.self)")
-                }
                 try Task.checkCancellation()
                 let (nextToken, time) = try Utils.time {
                     return try self.predictNextToken(from: tokens)
                 }
+                try Task.checkCancellation()
                 tokens.append(nextToken)
                 newTokens.append(nextToken)
                 let prediction = try decode(tokens: newTokens)
@@ -149,6 +147,6 @@ extension TokenBasedLLMService {
     }
 
     static var tiny_llama: LLMService {
-        TokenBasedLLMService(modelName: "tiny-llama", maxNewTokens: 120)
+        TokenBasedLLMService(modelName: "tiny_llama", maxNewTokens: 512)
     }
 }

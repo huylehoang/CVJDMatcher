@@ -22,14 +22,14 @@ final class NLEmbeddingService: EmbeddingService {
         self.model = model
     }
 
-    func embed(_ text: String) throws -> [Double] {
+    func embed(_ text: String) throws -> [Float] {
         guard let model = model else {
             throw EmbeddingError.modelNotFound
         }
         guard let vector = model.vector(for: text) else {
             throw EmbeddingError.invalidOutput
         }
-        return vector
+        return vector.map { Float($0) }
     }
 }
 

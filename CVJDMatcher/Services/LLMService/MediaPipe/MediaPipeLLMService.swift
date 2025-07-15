@@ -11,15 +11,17 @@ import Foundation
 final class MediaPipeLLMService: LLMService {
     private let modelName: String
     private let bundle: Bundle
-    private let generateTimeout: TimeInterval
     private var modelPath: String?
+
+    var generationTimeoutInSeconds: TimeInterval {
+        60
+    }
 
     var onPartialOuput: ((String) -> Void)?
 
-    init(modelName: String, bundle: Bundle = .main, generateTimeout: TimeInterval = 60) {
+    init(modelName: String, bundle: Bundle = .main) {
         self.modelName = modelName
         self.bundle = bundle
-        self.generateTimeout = generateTimeout
     }
 
     func loadModel() async throws {
@@ -52,7 +54,6 @@ final class MediaPipeLLMService: LLMService {
                 }
                 try Task.checkCancellation()
                 result += prediction
-                try Task.checkCancellation()
                 print("----------------------------------------------------")
                 print("🦄 Prediction: \(result)")
                 print("----------------------------------------------------\n\n")

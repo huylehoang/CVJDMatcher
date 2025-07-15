@@ -7,6 +7,11 @@
 
 import SwiftUI
 
+enum RAGServiceType: String, CaseIterable {
+    case inMemory
+    case vectorDB
+}
+
 enum LLMServiceType: String, CaseIterable {
     case media_pipe_gemma_2b_it_cpu_int8
     case firebase_gemini_1_5_flash
@@ -61,7 +66,27 @@ final class DefaultRAGServiceProvider: RAGServiceProvider {
         }
     }
 
+    private var vectorDB: VectorDatabase {
+        switch appEnvironment.embeddingServiceType {
+        case .mini_lm:
+            MiniLMVectorDatabase()
+        case .natural_language_for_english:
+            NLVectorDatabase()
+        case .stsb_roberta_large:
+            StsbVectorDatabase()
+        }
+    }
+
     var ragService: RAGService {
-        StandardRAGService(embeddingService: embeddingService, llmService: llmService)
+        switch appEnvironment.ragServiceType {
+        case .inMemory:
+            InMemoryRAGService(embeddingService: embeddingService, llmService: llmService)
+        case .vectorDB:
+            VectorDBRAGService(
+                embeddingService: embeddingService,
+                llmService: llmService,
+                vectorDB: vectorDB
+            )
+        }
     }
 }

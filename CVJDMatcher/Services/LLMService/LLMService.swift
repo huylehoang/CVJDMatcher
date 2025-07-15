@@ -36,10 +36,10 @@ extension LLMService {
             }
             group.addTask {
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw CancellationError()
+                throw LLMError.inferenceTimedOut
             }
             guard let result = try await group.next() else {
-                throw CancellationError()
+                throw LLMError.inferenceTimedOut
             }
             group.cancelAll()
             return result
@@ -55,6 +55,7 @@ enum LLMError: Error, LocalizedError {
     case outputMissing
     case invalidInput
     case invalidOutput
+    case inferenceTimedOut
 
     var errorDescription: String? {
         switch self {
@@ -70,6 +71,8 @@ enum LLMError: Error, LocalizedError {
             "Invalid input format found in model input."
         case .invalidOutput:
             "Invalid explanation format found in model output."
+        case .inferenceTimedOut:
+            "Response generation timed out."
         }
     }
 }

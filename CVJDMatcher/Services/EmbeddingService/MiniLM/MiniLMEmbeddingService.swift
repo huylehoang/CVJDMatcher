@@ -49,7 +49,7 @@ final class MiniLMEmbeddingService: EmbeddingService {
     }
 
     /// Runs the Core ML model on the input text and returns the embedding vector.
-    func embed(_ text: String) throws -> [Double] {
+    func embed(_ text: String) throws -> [Float] {
         guard let model else {
             throw EmbeddingError.modelNotFound
         }
@@ -67,7 +67,7 @@ final class MiniLMEmbeddingService: EmbeddingService {
         else {
             throw EmbeddingError.invalidOutput
         }
-        return (0..<embedding.count).map { Double(truncating: embedding[$0]) }
+        return (0..<embedding.count).map { Float(truncating: embedding[$0]) }
     }
 
     private func tokenize(_ text: String) -> (inputIDs: [Int], attentionMask: [Int]) {

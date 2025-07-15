@@ -6,7 +6,7 @@
 //
 
 enum PromptProvider {
-    static func multiCandidatePrompt(jd: String, results: [MatchResult], topK: Int) -> String {
+    static func multiCandidatePrompt(jd: String, cvs: String, topK: Int) -> String {
         """
         You are an expert technical recruiter. Here's a job description and \(topK) candidates. \
         Who is the best fit? Why?
@@ -14,23 +14,9 @@ enum PromptProvider {
         Job Description:
         \(jd)
         
-        \(results.candidateBlocks)
+        \(cvs)
         
         Please summarize strengths and weaknesses of each, and name the best candidate.
         """
-    }
-}
-
-private extension [MatchResult] {
-    var candidateBlocks: String {
-        enumerated()
-            .map { "Candidate \($0 + 1): \($1.cleanedCV)" }
-            .joined(separator: "\n\n")
-    }
-}
-
-private extension MatchResult {
-    var cleanedCV: String {
-        cv.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

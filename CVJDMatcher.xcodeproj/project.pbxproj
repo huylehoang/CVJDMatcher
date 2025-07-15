@@ -9,14 +9,15 @@
 /* Begin PBXBuildFile section */
 		244D3DC02E241A85002E64CC /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 244D3DBF2E241A85002E64CC /* FirebaseAI */; };
 		2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 2460C68B2E1B8375003E4E2E /* Transformers */; };
-		45AA0591B6F1259A2612D633 /* Pods_CVJDMatcher.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */; };
+		2483DB5B2E261683004996CE /* ObjectBox.xcframework in Frameworks */ = {isa = PBXBuildFile; productRef = 2483DB5A2E261683004996CE /* ObjectBox.xcframework */; };
+		E5C379CA3DF020C495424C7D /* Pods_CVJDMatcher.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F225384D4074EBF178486B5D /* Pods_CVJDMatcher.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		05F0E5348429CD92538720CE /* Pods-CVJDMatcher.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CVJDMatcher.release.xcconfig"; path = "Target Support Files/Pods-CVJDMatcher/Pods-CVJDMatcher.release.xcconfig"; sourceTree = "<group>"; };
 		245A7BCB2E123CDD00936155 /* CVJDMatcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CVJDMatcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CVJDMatcher.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CE8A70EF820C37DDA286714E /* Pods-CVJDMatcher.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CVJDMatcher.debug.xcconfig"; path = "Target Support Files/Pods-CVJDMatcher/Pods-CVJDMatcher.debug.xcconfig"; sourceTree = "<group>"; };
-		DB759A22A32D6CA38C778899 /* Pods-CVJDMatcher.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CVJDMatcher.release.xcconfig"; path = "Target Support Files/Pods-CVJDMatcher/Pods-CVJDMatcher.release.xcconfig"; sourceTree = "<group>"; };
+		8883213AE39F67F2274B4F35 /* Pods-CVJDMatcher.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CVJDMatcher.debug.xcconfig"; path = "Target Support Files/Pods-CVJDMatcher/Pods-CVJDMatcher.debug.xcconfig"; sourceTree = "<group>"; };
+		F225384D4074EBF178486B5D /* Pods_CVJDMatcher.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CVJDMatcher.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,9 +33,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2483DB5B2E261683004996CE /* ObjectBox.xcframework in Frameworks */,
 				2460C68C2E1B8375003E4E2E /* Transformers in Frameworks */,
-				45AA0591B6F1259A2612D633 /* Pods_CVJDMatcher.framework in Frameworks */,
 				244D3DC02E241A85002E64CC /* FirebaseAI in Frameworks */,
+				E5C379CA3DF020C495424C7D /* Pods_CVJDMatcher.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,7 +49,7 @@
 				245A7BCD2E123CDD00936155 /* CVJDMatcher */,
 				245A7BCC2E123CDD00936155 /* Products */,
 				C24669ABA4D2229516A0F928 /* Pods */,
-				B01257F6B81C387391347C6B /* Frameworks */,
+				90DE43A4BAFD26B0815F98D5 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -59,10 +61,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		B01257F6B81C387391347C6B /* Frameworks */ = {
+		90DE43A4BAFD26B0815F98D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				89DB86462A1770C22EC7A5C0 /* Pods_CVJDMatcher.framework */,
+				F225384D4074EBF178486B5D /* Pods_CVJDMatcher.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -70,8 +72,8 @@
 		C24669ABA4D2229516A0F928 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				CE8A70EF820C37DDA286714E /* Pods-CVJDMatcher.debug.xcconfig */,
-				DB759A22A32D6CA38C778899 /* Pods-CVJDMatcher.release.xcconfig */,
+				8883213AE39F67F2274B4F35 /* Pods-CVJDMatcher.debug.xcconfig */,
+				05F0E5348429CD92538720CE /* Pods-CVJDMatcher.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -83,7 +85,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 245A7BD62E123CDE00936155 /* Build configuration list for PBXNativeTarget "CVJDMatcher" */;
 			buildPhases = (
-				1BB1C86136F44D78D7A23A2F /* [CP] Check Pods Manifest.lock */,
+				D30CA8058A2A687FD636A68B /* [CP] Check Pods Manifest.lock */,
 				245A7BC72E123CDD00936155 /* Sources */,
 				245A7BC82E123CDD00936155 /* Frameworks */,
 				245A7BC92E123CDD00936155 /* Resources */,
@@ -99,6 +101,7 @@
 			packageProductDependencies = (
 				2460C68B2E1B8375003E4E2E /* Transformers */,
 				244D3DBF2E241A85002E64CC /* FirebaseAI */,
+				2483DB5A2E261683004996CE /* ObjectBox.xcframework */,
 			);
 			productName = CVJDMatcher;
 			productReference = 245A7BCB2E123CDD00936155 /* CVJDMatcher.app */;
@@ -131,6 +134,7 @@
 			packageReferences = (
 				2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */,
 				244D3DBE2E241A85002E64CC /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				2483DB592E261683004996CE /* XCRemoteSwiftPackageReference "objectbox-swift-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 245A7BCC2E123CDD00936155 /* Products */;
@@ -153,7 +157,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		1BB1C86136F44D78D7A23A2F /* [CP] Check Pods Manifest.lock */ = {
+		D30CA8058A2A687FD636A68B /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -311,7 +315,7 @@
 		};
 		245A7BD72E123CDE00936155 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CE8A70EF820C37DDA286714E /* Pods-CVJDMatcher.debug.xcconfig */;
+			baseConfigurationReference = 8883213AE39F67F2274B4F35 /* Pods-CVJDMatcher.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -319,6 +323,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3KVCFKUZZ6;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -341,7 +346,7 @@
 		};
 		245A7BD82E123CDE00936155 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DB759A22A32D6CA38C778899 /* Pods-CVJDMatcher.release.xcconfig */;
+			baseConfigurationReference = 05F0E5348429CD92538720CE /* Pods-CVJDMatcher.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -349,6 +354,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 3KVCFKUZZ6;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -409,6 +415,14 @@
 				minimumVersion = 0.1.21;
 			};
 		};
+		2483DB592E261683004996CE /* XCRemoteSwiftPackageReference "objectbox-swift-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/objectbox/objectbox-swift-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.4.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -421,6 +435,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 2460C68A2E1B8375003E4E2E /* XCRemoteSwiftPackageReference "swift-transformers" */;
 			productName = Transformers;
+		};
+		2483DB5A2E261683004996CE /* ObjectBox.xcframework */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 2483DB592E261683004996CE /* XCRemoteSwiftPackageReference "objectbox-swift-spm" */;
+			productName = ObjectBox.xcframework;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

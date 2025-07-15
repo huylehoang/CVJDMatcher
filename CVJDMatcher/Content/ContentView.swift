@@ -125,7 +125,7 @@ struct MatchResultDescriptionText: View {
 
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
-
+    @State private var selectedRAG = AppEnvironment.shared.ragServiceType
     @State private var selectedLLM = AppEnvironment.shared.llmServiceType
     @State private var selectedEmbedding = AppEnvironment.shared.embeddingServiceType
 
@@ -134,6 +134,17 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                Section(
+                    header: Text("RAG Service")
+                        .font(.system(size: 18, weight: .bold))
+                ) {
+                    Picker("Type", selection: $selectedRAG) {
+                        ForEach(RAGServiceType.allCases, id: \.self) {
+                            Text($0.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
                 Section(
                     header: Text("LLM Service")
                         .font(.system(size: 18, weight: .bold))

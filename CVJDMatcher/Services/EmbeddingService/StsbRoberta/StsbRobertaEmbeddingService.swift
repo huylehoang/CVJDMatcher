@@ -41,7 +41,7 @@ final class STSRobertaEmbeddingService: EmbeddingService {
         vocab = try JSONDecoder().decode([String:Int].self, from: data)
     }
 
-    func embed(_ text: String) throws -> [Double] {
+    func embed(_ text: String) throws -> [Float] {
         guard let model else {
             throw EmbeddingError.modelNotFound
         }
@@ -59,7 +59,7 @@ final class STSRobertaEmbeddingService: EmbeddingService {
         else {
             throw EmbeddingError.modelNotFound
         }
-        return (0..<embeddings.count).map { Double(truncating: embeddings[$0]) }
+        return (0..<embeddings.count).map { Float(truncating: embeddings[$0]) }
     }
 
     private func tokenize(_ text: String) -> ([Int],[Int]) {

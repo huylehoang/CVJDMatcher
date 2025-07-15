@@ -18,6 +18,10 @@ protocol RAGService {
 }
 
 extension RAGService {
+    var emptyResponse: String {
+        "No matching cvs found."
+    }
+
     func generateReponse(for query: String) async throws -> String {
         try await generateReponse(for: query, onPartial: nil)
     }

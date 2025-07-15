@@ -10,5 +10,5 @@ import Foundation
 struct MatchResult: Identifiable {
     let id = UUID()
     let cv: String
-    let score: Double
+    let score: Float
 }

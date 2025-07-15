@@ -41,6 +41,37 @@ final class ContentViewModel: ObservableObject {
         and MVVM. Has worked on ride-hailing and fintech apps. Led the Android migration from \
         Java to Kotlin. No professional iOS experience, but has contributed to Flutter-based \
         side projects.
+        """,
+        """
+        Tran X is a Senior iOS Developer with 6 years experience building finance and e‑commerce \
+        apps using Swift, MVVM, Combine, and UIKit. Designed modular app architectures with Swift \
+        Package Manager and integrated Core ML.
+        """,
+        """
+        Vu Y is a Mid‑Level iOS Engineer with 4 years in SwiftUI, MVVM, and Combine. Delivered \
+        healthcare and fintech applications, optimized performance and implemented XCTest for \
+        robust testing.
+        """,
+        """
+        Le C is an Android Developer with 5 years of experience using Kotlin, Jetpack Compose, and \
+        MVVM. Led Java‑to‑Kotlin migrations, but has no professional iOS background.
+        """,
+        """
+        Tran D is a Frontend Engineer specializing in React, Next.js, and TypeScript with 5 years \
+        experience building dashboards and responsive design systems. No mobile development \
+        experience.
+        """,
+        """
+        Mai E is a Full‑Stack Engineer skilled in Node.js, React, and AWS. Built microservices for \
+        e‑commerce and implemented CI/CD pipelines over 5 years.
+        """,
+        """
+        Huy F is a QA Automation Engineer specializing in Selenium, Cypress, and Java, with 5 \
+        years in Agile teams. Automated regression testing and integrated CI workflows.
+        """,
+        """
+        Khanh G is a DevOps Engineer with 7 years experience in Kubernetes, Terraform, and \
+        Jenkins. Managed Docker/K8s clusters and improved deployment pipelines reliability.
         """
     ]
 
@@ -82,15 +113,21 @@ final class ContentViewModel: ObservableObject {
                 print("🦄 Result: \(result)")
                 print("----------------------------------------------------\n\n")
                 await MainActor.run {
+                    self.isLoading = false
                     self.result = result
+                }
+            } catch is CancellationError {
+                print("🛑 Task was cancelled")
+            } catch LLMError.inferenceTimedOut {
+                print("🛑 Inference timed out")
+                await MainActor.run {
+                    self.isLoading = false
                 }
             } catch {
                 await MainActor.run {
+                    self.isLoading = false
                     self.errorMessage = error.localizedDescription
                 }
-            }
-            await MainActor.run {
-                self.isLoading = false
             }
         }
     }

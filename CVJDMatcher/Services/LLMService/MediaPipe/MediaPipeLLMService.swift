@@ -63,6 +63,6 @@ final class MediaPipeLLMService: LLMService {
 
 extension MediaPipeLLMService  {
     static var gemma_2b_it_cpu_int8: LLMService {
-        MediaPipeLLMService(modelName: "gemma-2b-it-cpu-int8")
+        MediaPipeLLMService(modelName: "gemma_2b_it_cpu_int8")
     }
 }

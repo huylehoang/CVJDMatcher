@@ -50,7 +50,7 @@ final class DefaultRAGServiceProvider: RAGServiceProvider {
         case .natural_language_for_english:
             NLEmbeddingService.forEnglish
         case .stsb_roberta_large:
-            STSRobertaEmbeddingService()
+            StsbRobertaLargeEmbeddingService()
         }
     }
 

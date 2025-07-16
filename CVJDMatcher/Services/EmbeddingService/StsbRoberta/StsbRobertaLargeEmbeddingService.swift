@@ -1,5 +1,5 @@
 //
-//  StsbRobertaEmbeddingService.swift
+//  StsbRobertaLargeEmbeddingService.swift
 //  CVJDMatcher
 //
 //  Created by Le Hoang Huy on 12/7/25.
@@ -7,13 +7,13 @@
 
 import CoreML
 
-final class STSRobertaEmbeddingService: EmbeddingService {
+final class StsbRobertaLargeEmbeddingService: EmbeddingService {
     private let modelName: String
     private let vocabName: String
     private let bundle: Bundle
     private let maxLength: Int
     private var model: MLModel?
-    private var vocab: [String:Int] = [:]
+    private var vocab = [String: Int]()
 
     init(
         modelName: String = "stsb_roberta_large",

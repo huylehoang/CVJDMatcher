@@ -125,10 +125,10 @@ struct MatchResultDescriptionText: View {
 
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var ragServiceType = AppEnvironment.shared.ragServiceType
-    @State private var embeddingServiceType = AppEnvironment.shared.embeddingServiceType
-    @State private var llmServiceType = AppEnvironment.shared.llmServiceType
-    @State private var promptServiceType = AppEnvironment.shared.promptServiceType
+    @State private var ragServiceType = StandardAppEnvironment.shared.ragServiceType
+    @State private var embeddingServiceType = StandardAppEnvironment.shared.embeddingServiceType
+    @State private var llmServiceType = StandardAppEnvironment.shared.llmServiceType
+    @State private var promptServiceType = StandardAppEnvironment.shared.promptServiceType
 
     let onApply: () -> Void
 
@@ -189,10 +189,12 @@ struct SettingsView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
-                        AppEnvironment.shared.set(ragServiceType: ragServiceType)
-                        AppEnvironment.shared.set(embeddingServiceType: embeddingServiceType)
-                        AppEnvironment.shared.set(llmServiceType: llmServiceType)
-                        AppEnvironment.shared.set(promptServiceType: promptServiceType)
+                        StandardAppEnvironment.shared.set(ragServiceType: ragServiceType)
+                        StandardAppEnvironment.shared.set(
+                            embeddingServiceType: embeddingServiceType
+                        )
+                        StandardAppEnvironment.shared.set(llmServiceType: llmServiceType)
+                        StandardAppEnvironment.shared.set(promptServiceType: promptServiceType)
                         dismiss()
                         onApply()
                     }

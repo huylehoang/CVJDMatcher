@@ -53,8 +53,8 @@ final class ContentViewModel: ObservableObject {
         robust testing.
         """,
         """
-        Le C is an Android Developer with 5 years of experience using Kotlin, Jetpack Compose, and \
-        MVVM. Led Java‑to‑Kotlin migrations, but has no professional iOS background.
+        Nguyen K is an Android Developer with 5 years of experience using Kotlin, Jetpack Compose, \
+        and MVVM. Led Java‑to‑Kotlin migrations, but has no professional iOS background.
         """,
         """
         Tran D is a Frontend Engineer specializing in React, Next.js, and TypeScript with 5 years \
@@ -75,7 +75,7 @@ final class ContentViewModel: ObservableObject {
         """
     ]
 
-    init(ragServiceProvider: RAGServiceProvider = DefaultRAGServiceProvider()) {
+    init(ragServiceProvider: RAGServiceProvider = StandardRAGServiceProvider()) {
         self.ragServiceProvider = ragServiceProvider
     }
 

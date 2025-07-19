@@ -11,38 +11,50 @@ import Foundation
 final class MediaPipeLLMService: LLMService {
     private let modelName: String
     private let bundle: Bundle
-    private var modelPath: String?
-
-    var generationTimeoutInSeconds: TimeInterval {
-        60
-    }
+    private let maxTokens: Int
+    private let temperature: Float
+    private let topK: Int
+    private let topP: Float
+    private var session: LlmInference.Session?
 
     var onPartialOuput: ((String) -> Void)?
 
-    init(modelName: String, bundle: Bundle = .main) {
+    init(
+        modelName: String,
+        bundle: Bundle = .main,
+        maxTokens: Int = 1024,
+        temparature: Float = 0.6,
+        topK: Int = 50,
+        topP: Float = 0.9
+    ) {
         self.modelName = modelName
         self.bundle = bundle
+        self.maxTokens = maxTokens
+        self.temperature = temparature
+        self.topK = topK
+        self.topP = topP
     }
 
     func loadModel() async throws {
         guard let url = bundle.url(forResource: modelName, withExtension: ".bin") else {
             throw LLMError.modelNotFound
         }
-        modelPath = url.path()
+        let options = LlmInference.Options(modelPath: url.path())
+        options.maxTokens = maxTokens
+        let llmInference = try LlmInference(options: options)
+        let sessionOptions = LlmInference.Session.Options()
+        sessionOptions.temperature = temperature
+        sessionOptions.topk = topK
+        sessionOptions.topp = topP
+        session = try LlmInference.Session(llmInference: llmInference, options: sessionOptions)
     }
 
     func generateResponse(for prompt: String) async throws -> String {
-        guard let modelPath else {
+        guard let session else {
             throw LLMError.modelNotFound
         }
-        let options = LlmInference.Options(modelPath: modelPath)
-        options.maxTokens = 512
-        options.maxTopk = 40
-        options.waitForWeightUploads = true
-        options.useSubmodel = false
-        options.sequenceBatchSize = 1
-        let llmInference = try LlmInference(options: options)
-        let stream = llmInference.generateResponseAsync(inputText: prompt)
+        try session.addQueryChunk(inputText: prompt)
+        let stream = session.generateResponseAsync()
         print("----------------------------------------------------")
         print("⚡️ Prompt: \(prompt)")
         print("----------------------------------------------------\n\n")

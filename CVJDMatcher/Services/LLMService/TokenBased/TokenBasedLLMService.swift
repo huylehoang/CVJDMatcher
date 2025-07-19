@@ -16,6 +16,7 @@ final class TokenBasedLLMService: LLMService {
     private let bundle: Bundle
     private let topK: Int
     private let maxNewTokens:Int
+    private let appLogger: AppLogger
     private var tokenizer: Tokenizer?
     private var languageModel: LanguageModel?
     private var seqLen = 64
@@ -24,11 +25,18 @@ final class TokenBasedLLMService: LLMService {
 
     var onPartialOuput: ((String) -> Void)?
 
-    init(modelName: String, bundle: Bundle = .main, topK: Int = 50, maxNewTokens: Int = 60) {
+    init(
+        modelName: String,
+        bundle: Bundle = .main,
+        topK: Int = 50,
+        maxNewTokens: Int = 60,
+        appLogger: AppLogger = ConsoleAppLogger()
+    ) {
         self.modelName = modelName
         self.bundle = bundle
         self.topK = topK
         self.maxNewTokens = maxNewTokens
+        self.appLogger = appLogger
     }
 
     func loadModel() async throws {
@@ -48,18 +56,16 @@ final class TokenBasedLLMService: LLMService {
             tokenizerData: languageModel.tokenizerData
         )
         seqLen = model.seqLen ?? 64
-        print("----------------------------------------------------")
-        print("⚡️ Tokenizer: \(String(describing: tokenizer.self))")
-        print("----------------------------------------------------\n\n")
+        if let tokenizer {
+            appLogger.logTokenizer(tokenizer)
+        }
     }
 
     func generateResponse(for prompt: String) async throws -> String {
         guard let tokenizer else {
             throw LLMError.tokenizerNotFound
         }
-        print("----------------------------------------------------")
-        print("⚡️ Prompt: \(prompt)")
-        print("----------------------------------------------------\n\n")
+        appLogger.logPrompt(prompt)
         input_ids_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
         attention_mask_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
         return try await withTimeout { [weak self] in
@@ -77,10 +83,7 @@ final class TokenBasedLLMService: LLMService {
                 tokens.append(nextToken)
                 newTokens.append(nextToken)
                 let prediction = try decode(tokens: newTokens)
-                print("----------------------------------------------------")
-                print("🦄 <\(time)s>", i, nextToken, tokens.count)
-                print("🦄 Prediction: \(prediction)")
-                print("----------------------------------------------------\n\n")
+                appLogger.logPrediction(prediction, index: i, time: time)
                 onPartialOuput?(prediction)
             }
             return try decode(tokens: newTokens)

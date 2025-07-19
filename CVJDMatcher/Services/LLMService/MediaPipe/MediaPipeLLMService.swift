@@ -15,6 +15,7 @@ final class MediaPipeLLMService: LLMService {
     private let temperature: Float
     private let topK: Int
     private let topP: Float
+    private let appLogger: AppLogger
     private var session: LlmInference.Session?
 
     var onPartialOuput: ((String) -> Void)?
@@ -25,7 +26,8 @@ final class MediaPipeLLMService: LLMService {
         maxTokens: Int = 1024,
         temparature: Float = 0.6,
         topK: Int = 50,
-        topP: Float = 0.9
+        topP: Float = 0.9,
+        appLogger: AppLogger = ConsoleAppLogger()
     ) {
         self.modelName = modelName
         self.bundle = bundle
@@ -33,6 +35,7 @@ final class MediaPipeLLMService: LLMService {
         self.temperature = temparature
         self.topK = topK
         self.topP = topP
+        self.appLogger = appLogger
     }
 
     func loadModel() async throws {
@@ -55,17 +58,13 @@ final class MediaPipeLLMService: LLMService {
         }
         try session.addQueryChunk(inputText: prompt)
         let stream = session.generateResponseAsync()
-        print("----------------------------------------------------")
-        print("⚡️ Prompt: \(prompt)")
-        print("----------------------------------------------------\n\n")
+        appLogger.logPrompt(prompt)
         return try await withTimeout { [weak self] in
             var result = ""
             for try await prediction in stream {
                 try Task.checkCancellation()
                 result += prediction
-                print("----------------------------------------------------")
-                print("🦄 Prediction: \(result)")
-                print("----------------------------------------------------\n\n")
+                self?.appLogger.logPrediction(result)
                 self?.onPartialOuput?(result)
             }
             return result
@@ -75,6 +74,12 @@ final class MediaPipeLLMService: LLMService {
 
 extension MediaPipeLLMService  {
     static var gemma_2b_it_cpu_int8: LLMService {
-        MediaPipeLLMService(modelName: "gemma_2b_it_cpu_int8")
+        MediaPipeLLMService(
+            modelName: "gemma_2b_it_cpu_int8",
+            maxTokens: 1024,
+            temparature: 0.6,
+            topK: 50,
+            topP: 0.9
+        )
     }
 }

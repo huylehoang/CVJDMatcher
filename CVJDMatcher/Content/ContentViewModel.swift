@@ -11,10 +11,11 @@ import Combine
 @MainActor
 final class ContentViewModel: ObservableObject {
     private let ragServiceProvider: RAGServiceProvider
+    private let appLogger: AppLogger
+    private var currentTask: Task<Void, Never>? // track running task
     @Published var result: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
-    private var currentTask: Task<Void, Never>? // track running task
     let jd = """
     We are hiring a passionate iOS Developer to join our mobile team. \
     The ideal candidate should have:
@@ -75,8 +76,12 @@ final class ContentViewModel: ObservableObject {
         """
     ]
 
-    init(ragServiceProvider: RAGServiceProvider = StandardRAGServiceProvider()) {
+    init(
+        ragServiceProvider: RAGServiceProvider = StandardRAGServiceProvider(),
+        appLogger: AppLogger = ConsoleAppLogger()
+    ) {
         self.ragServiceProvider = ragServiceProvider
+        self.appLogger = appLogger
     }
 
     func runMatchingFlow() {
@@ -99,7 +104,7 @@ final class ContentViewModel: ObservableObject {
         currentTask = Task.detached(priority: .userInitiated) { [weak self] in
             guard !Task.isCancelled, let self else { return }
             do {
-                print("⚡️ Run Matching Flow")
+                await appLogger.logRunMatchingFlow()
                 try await ragService.setup()
                 try Task.checkCancellation()
                 try ragService.indexData(self.cvs)
@@ -112,22 +117,20 @@ final class ContentViewModel: ObservableObject {
                     }
                 }
                 try Task.checkCancellation()
-                print("----------------------------------------------------")
-                print("🦄 Result: \(result)")
-                print("----------------------------------------------------\n\n")
+                await appLogger.logResult(result)
                 await MainActor.run {
                     self.isLoading = false
                     self.result = result
                 }
             } catch is CancellationError {
-                print("🛑 Task was cancelled")
+                await appLogger.logCancelled()
             } catch LLMError.inferenceTimedOut {
-                print("🛑 Inference timed out")
+                await appLogger.logInferenceTimeout()
                 await MainActor.run {
                     self.isLoading = false
                 }
             } catch {
-                print("⚠️ An error occurred: \(error.localizedDescription)")
+                await appLogger.logError(error)
                 await MainActor.run {
                     self.isLoading = false
                     self.errorMessage = error.localizedDescription

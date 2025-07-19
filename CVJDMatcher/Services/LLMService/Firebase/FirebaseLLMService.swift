@@ -9,12 +9,14 @@ import FirebaseAI
 
 final class FirebaseLLMService: LLMService {
     private let modelName: String
+    private let appLogger: AppLogger
     private var model: GenerativeModel?
 
     var onPartialOuput: ((String) -> Void)?
 
-    init(modelName: String) {
+    init(modelName: String, appLogger: AppLogger = ConsoleAppLogger()) {
         self.modelName = modelName
+        self.appLogger = appLogger
     }
 
     func loadModel() async throws {
@@ -27,22 +29,15 @@ final class FirebaseLLMService: LLMService {
             throw LLMError.modelNotFound
         }
         return try await withTimeout { [weak self] in
-            guard let self else {
-                throw LLMError.invalidOutput
-            }
-            print("----------------------------------------------------")
-            print("⚡️ Prompt: \(prompt)")
-            print("----------------------------------------------------\n\n")
+            self?.appLogger.logPrompt(prompt)
             var result = ""
             let stream = try model.generateContentStream(prompt)
             for try await chunk in stream {
                 try Task.checkCancellation()
                 if let part = chunk.text {
                     result += part
-                    print("----------------------------------------------------")
-                    print("🦄 Prediction: \(result)")
-                    print("----------------------------------------------------\n\n")
-                    onPartialOuput?(result)
+                    self?.appLogger.logPrediction(result)
+                    self?.onPartialOuput?(result)
                 }
             }
             return result

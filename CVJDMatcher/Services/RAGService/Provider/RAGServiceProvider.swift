@@ -9,14 +9,8 @@ protocol RAGServiceProvider {
     var ragService: RAGService { get }
 }
 
-final class StandardRAGServiceProvider: RAGServiceProvider {
-    private let appEnvironment: AppEnvironment
-
-    init(appEnvironment: AppEnvironment = StandardAppEnvironment.shared) {
-        self.appEnvironment = appEnvironment
-    }
-
-    private var embeddingService: EmbeddingService {
+struct StandardRAGServiceProvider: RAGServiceProvider {
+    var embeddingService: EmbeddingService {
         switch appEnvironment.embeddingServiceType {
         case .mini_lm:
             MiniLMEmbeddingService()
@@ -27,7 +21,7 @@ final class StandardRAGServiceProvider: RAGServiceProvider {
         }
     }
 
-    private var llmService: LLMService {
+    var llmService: LLMService {
         switch appEnvironment.llmServiceType {
         case .media_pipe_gemma_2b_it_cpu_int8:
             MediaPipeLLMService.gemma_2b_it_cpu_int8
@@ -44,7 +38,7 @@ final class StandardRAGServiceProvider: RAGServiceProvider {
         }
     }
 
-    private var promptService: PromptService {
+    var promptService: PromptService {
         switch appEnvironment.promptServiceType {
         case .v1:
             PromptServiceV1()
@@ -53,7 +47,7 @@ final class StandardRAGServiceProvider: RAGServiceProvider {
         }
     }
 
-    private var vectorDB: VectorDatabase {
+    var vectorDB: VectorDatabase {
         switch appEnvironment.embeddingServiceType {
         case .mini_lm:
             MiniLMVectorDatabase()
@@ -80,5 +74,11 @@ final class StandardRAGServiceProvider: RAGServiceProvider {
                 vectorDB: vectorDB
             )
         }
+    }
+
+    private let appEnvironment: AppEnvironment
+
+    init(appEnvironment: AppEnvironment = StandardAppEnvironment.shared) {
+        self.appEnvironment = appEnvironment
     }
 }

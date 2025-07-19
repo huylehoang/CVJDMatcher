@@ -35,7 +35,7 @@ Package.resolved
 *.mlmodelc
 *.mlpackage
 *.json
-*.bịn
+*.bin
 CoreMLModels/
 
 # --- ⛔️ Ignore CocoaPods dependencies ---

@@ -15,17 +15,24 @@ final class SwiftTransformerLLMService: LLMService {
     fileprivate static let marker = "=== RESPONSE START ==="
 
     private let modelName: String
-    private let bundle: Bundle
-    private var tokenizer: Tokenizer!
-    private var languageModel: LanguageModel!
     private let generationConfig: GenerationConfig
+    private let bundle: Bundle
+    private let appLogger: AppLogger
+    private var tokenizer: Tokenizer?
+    private var languageModel: LanguageModel?
 
     var onPartialOuput: ((String) -> Void)?
 
-    init(modelName: String, generationConfig: GenerationConfig, bundle: Bundle = .main) {
+    init(
+        modelName: String,
+        generationConfig: GenerationConfig,
+        bundle: Bundle = .main,
+        appLogger: AppLogger = ConsoleAppLogger()
+    ) {
         self.modelName = modelName
         self.generationConfig = generationConfig
         self.bundle = bundle
+        self.appLogger = appLogger
     }
 
     func loadModel() async throws {
@@ -44,19 +51,20 @@ final class SwiftTransformerLLMService: LLMService {
             tokenizerConfig: tokenizerConfig,
             tokenizerData: languageModel.tokenizerData
         )
-        print("----------------------------------------------------")
-        print("⚡️ Tokenizer: \(String(describing: tokenizer.self))")
-        print("----------------------------------------------------\n\n")
+        if let tokenizer {
+            appLogger.logTokenizer(tokenizer)
+        }
     }
 
     func generateResponse(for prompt: String) async throws -> String {
         guard let languageModel else {
             throw LLMError.modelNotFound
         }
+        guard let tokenizer else {
+            throw LLMError.tokenizerNotFound
+        }
         let prompt = prompt + "\n\(SwiftTransformerLLMService.marker)"
-        print("----------------------------------------------------")
-        print("⚡️ Prompt: \(prompt)")
-        print("----------------------------------------------------\n\n")
+        appLogger.logPrompt(prompt)
         return try await withTimeout { [weak self] in
             guard let self else {
                 throw LLMError.invalidOutput
@@ -72,9 +80,7 @@ final class SwiftTransformerLLMService: LLMService {
                         return
                     }
                     let prediction = prediction.removingPrompt()
-                    print("----------------------------------------------------")
-                    print("🦄 Prediction: \(prediction)")
-                    print("----------------------------------------------------\n\n")
+                    self.appLogger.logPrediction(prediction)
                     self.onPartialOuput?(prediction)
                 }
             )

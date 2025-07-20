@@ -8,11 +8,13 @@
 import CoreML
 
 final class MiniLMEmbeddingService: EmbeddingService {
+    private typealias Pipeline = CoreMLPipeline<CoreMLTokenInput, CoreMLTokenOutput>
+
     private var modelName: String
     private let vocabName: String
     private let bundle: Bundle
     private let maxLength: Int
-    private var model: MLModel?
+    private var pipeline: Pipeline?
     private var vocab = [String: Int]()
     // Special tokens used by HuggingFace MiniLM
     private let clsToken = "[CLS]"
@@ -35,39 +37,23 @@ final class MiniLMEmbeddingService: EmbeddingService {
 
     /// Loads the compiled Core ML model from the app bundle.
     func loadModel() async throws {
-        guard
-            let modelUrl = bundle.url(forResource: modelName, withExtension: ".mlmodelc"),
-            let vocabUrl = bundle.url(forResource: vocabName, withExtension: "json")
-        else {
-            throw EmbeddingError.modelNotFound
-        }
-        let configuration = MLModelConfiguration()
-        configuration.computeUnits = .all
-        model = try MLModel(contentsOf: modelUrl, configuration: configuration)
-        let data = try Data(contentsOf: vocabUrl)
-        vocab = try JSONDecoder().decode([String:Int].self, from: data)
+        pipeline = try Pipeline(modelName: modelName, bundle: bundle)
+        vocab = try VocabLoader.load(vocabName: vocabName, bundle: bundle)
     }
 
     /// Runs the Core ML model on the input text and returns the embedding vector.
     func embed(_ text: String) throws -> [Float] {
-        guard let model else {
-            throw EmbeddingError.modelNotFound
+        guard let pipeline else {
+            throw AppError.modelNotFound
         }
-        let input = tokenize(text)
-        let inputIDs = MLMultiArray.from(input.inputIDs, dims: 2)
-        let attentionMask = MLMultiArray.from(input.attentionMask, dims: 2)
-        let provider = try MLDictionaryFeatureProvider(dictionary: [
-            "input_ids": inputIDs,
-            "attention_mask": attentionMask
-        ])
-        let output = try model.prediction(from: provider)
-        guard
-            let name = output.featureNames.first,
-            let embedding = output.featureValue(for: name)?.multiArrayValue
-        else {
-            throw EmbeddingError.invalidOutput
-        }
-        return (0..<embedding.count).map { Float(truncating: embedding[$0]) }
+        let (inputIDs, attentionMask) = tokenize(text)
+        let input = CoreMLTokenInput(
+            inputIDs: MLMultiArray.from(inputIDs, dims: 2),
+            attentionMask: MLMultiArray.from(attentionMask, dims: 2)
+        )
+        let output = try pipeline.predict(input: input)
+        let embeddings = output.logits
+        return (0..<embeddings.count).map { Float(truncating: embeddings[$0]) }
     }
 
     private func tokenize(_ text: String) -> (inputIDs: [Int], attentionMask: [Int]) {

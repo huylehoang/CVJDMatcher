@@ -23,7 +23,7 @@ final class MiniLMVectorDatabase: VectorDatabase {
     /// Clear all indexed candidates
     func clear() throws {
         guard let box else {
-            throw VectorDatabaseError.clearFailed
+            throw AppError.boxNotFound
         }
         try box.removeAll()
     }
@@ -31,7 +31,7 @@ final class MiniLMVectorDatabase: VectorDatabase {
     /// Index a list of texts with their embeddings
     func index(vectors: [(text: String, embedding: [Float])]) throws {
         guard let box else {
-            throw VectorDatabaseError.indexFailed
+            throw AppError.boxNotFound
         }
         let objs = vectors.map { MiniLMVector(text: $0.text, embedding: $0.embedding) }
         try box.put(objs)
@@ -40,7 +40,7 @@ final class MiniLMVectorDatabase: VectorDatabase {
     /// Query top-K candidates given a vector
     func search(queryVector: [Float], topK: Int) throws -> [Vector] {
         guard let box else {
-            throw VectorDatabaseError.searchFailed
+            throw AppError.boxNotFound
         }
         return try box
             .query {

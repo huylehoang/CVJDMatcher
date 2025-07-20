@@ -124,7 +124,7 @@ final class ContentViewModel: ObservableObject {
                 }
             } catch is CancellationError {
                 await appLogger.logCancelled()
-            } catch LLMError.inferenceTimedOut {
+            } catch AppError.inferenceTimedOut {
                 await appLogger.logInferenceTimeout()
                 await MainActor.run {
                     self.isLoading = false

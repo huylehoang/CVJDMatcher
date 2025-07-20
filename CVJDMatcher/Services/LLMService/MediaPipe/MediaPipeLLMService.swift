@@ -40,7 +40,7 @@ final class MediaPipeLLMService: LLMService {
 
     func loadModel() async throws {
         guard let url = bundle.url(forResource: modelName, withExtension: ".bin") else {
-            throw LLMError.modelNotFound
+            throw AppError.modelNotFound
         }
         let options = LlmInference.Options(modelPath: url.path())
         options.maxTokens = maxTokens
@@ -54,7 +54,7 @@ final class MediaPipeLLMService: LLMService {
 
     func generateResponse(for prompt: String) async throws -> String {
         guard let session else {
-            throw LLMError.modelNotFound
+            throw AppError.modelNotFound
         }
         try session.addQueryChunk(inputText: prompt)
         let stream = session.generateResponseAsync()

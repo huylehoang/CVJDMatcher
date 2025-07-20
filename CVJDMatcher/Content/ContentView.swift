@@ -111,7 +111,7 @@ struct MatchResultDescriptionText: View {
             .opacity(flash ? 0.3 : 1.0)
             .animation(.easeInOut(duration: 0.25), value: flash)
             .font(.system(size: 14))
-            .onAppear {
+            .onChange(of: text) { _ in
                 flash = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     flash = false

@@ -8,11 +8,13 @@
 import CoreML
 
 final class StsbRobertaLargeEmbeddingService: EmbeddingService {
+    private typealias Pipeline = CoreMLPipeline<CoreMLTokenInput, CoreMLTokenOutput>
+
     private let modelName: String
     private let vocabName: String
     private let bundle: Bundle
     private let maxLength: Int
-    private var model: MLModel?
+    private var pipeline: Pipeline?
     private var vocab = [String: Int]()
 
     init(
@@ -28,37 +30,21 @@ final class StsbRobertaLargeEmbeddingService: EmbeddingService {
     }
 
     func loadModel() async throws {
-        guard
-            let modelUrl = Bundle.main.url(forResource: modelName, withExtension: "mlmodelc"),
-            let vocabUrl = Bundle.main.url(forResource: vocabName, withExtension: "json")
-        else {
-            throw EmbeddingError.modelNotFound
-        }
-        let configuration = MLModelConfiguration()
-        configuration.computeUnits = .all
-        model = try MLModel(contentsOf: modelUrl, configuration: configuration)
-        let data = try Data(contentsOf: vocabUrl)
-        vocab = try JSONDecoder().decode([String:Int].self, from: data)
+        pipeline = try Pipeline(modelName: modelName, bundle: bundle)
+        vocab = try VocabLoader.load(vocabName: vocabName, bundle: bundle)
     }
 
     func embed(_ text: String) throws -> [Float] {
-        guard let model else {
-            throw EmbeddingError.modelNotFound
+        guard let pipeline else {
+            throw AppError.modelNotFound
         }
         let (inputIDs, attentionMask) = tokenize(text)
-        let idsArr = MLMultiArray.from(inputIDs, dims: 2)
-        let maskArr = MLMultiArray.from(attentionMask, dims: 2)
-        let provider = try MLDictionaryFeatureProvider(dictionary: [
-            "input_ids": idsArr,
-            "attention_mask": maskArr
-        ])
-        let output = try model.prediction(from: provider)
-        guard
-            let name = output.featureNames.first,
-            let embeddings = output.featureValue(for: name)?.multiArrayValue
-        else {
-            throw EmbeddingError.modelNotFound
-        }
+        let input = CoreMLTokenInput(
+            inputIDs: MLMultiArray.from(inputIDs, dims: 2),
+            attentionMask: MLMultiArray.from(attentionMask, dims: 2)
+        )
+        let output = try pipeline.predict(input: input)
+        let embeddings = output.logits
         return (0..<embeddings.count).map { Float(truncating: embeddings[$0]) }
     }
 

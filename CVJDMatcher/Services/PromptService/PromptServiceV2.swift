@@ -8,8 +8,8 @@
 struct PromptServiceV2: PromptService {
     func prompt(jd: String, cvs: String, topK: Int) -> String {
         """
-        You are an expert technical recruiter. Evaluate the following candidates solely based on \
-        their CV content in relation to the job description.
+        You are an expert technical recruiter. Evaluate the following \(topK) candidates solely \
+        based on their CV content in relation to the job description.
         
         Job Description:
         \(jd)

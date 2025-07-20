@@ -12,20 +12,6 @@ protocol ObjectBoxDatabase {
     func getStore() throws -> Store
 }
 
-enum ObjectBoxDatabaseError: Error, LocalizedError {
-    case bundleNotSetup
-    case storeNotSetup
-
-    var errorDescription: String? {
-        switch self {
-        case .bundleNotSetup:
-            "Object Box: App Bundle is not setup."
-        case .storeNotSetup:
-            "Object Box: Store is not setup."
-        }
-    }
-}
-
 final class StandardObjectBoxDatabase: ObjectBoxDatabase {
     static let shared = StandardObjectBoxDatabase()
 

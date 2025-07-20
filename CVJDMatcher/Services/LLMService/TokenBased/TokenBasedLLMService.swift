@@ -12,16 +12,19 @@ import Generation
 import CoreML
 
 final class TokenBasedLLMService: LLMService {
+    private typealias Pipeline = CoreMLPipeline<CoreMLTokenInput, CoreMLTokenOutput>
+
     private let modelName: String
     private let bundle: Bundle
     private let topK: Int
     private let maxNewTokens:Int
     private let appLogger: AppLogger
     private var tokenizer: Tokenizer?
-    private var languageModel: LanguageModel?
+    private var pipeline: Pipeline?
     private var seqLen = 64
-    private lazy var input_ids_array = MLMultiArray()
-    private lazy var attention_mask_array = MLMultiArray()
+    private var eosTokenId = 0
+    private lazy var inputIDs = MLMultiArray()
+    private lazy var attentionMask = MLMultiArray()
 
     var onPartialOuput: ((String) -> Void)?
 
@@ -40,22 +43,19 @@ final class TokenBasedLLMService: LLMService {
     }
 
     func loadModel() async throws {
-        guard let url = bundle.url(forResource: modelName, withExtension: ".mlmodelc") else {
-            throw LLMError.modelNotFound
-        }
-        let configuration = MLModelConfiguration()
-        configuration.computeUnits = .all
-        let model = try MLModel(contentsOf: url, configuration: configuration)
+        let pipeline = try Pipeline(modelName: modelName, bundle: bundle)
+        self.pipeline = pipeline
+        let model = pipeline.model
+        seqLen = model.seqLen ?? 64
         let languageModel = LanguageModel(model: model)
-        self.languageModel = languageModel
         guard let tokenizerConfig = try await languageModel.tokenizerConfig else {
-            throw LLMError.tokenizerNotFound
+            throw AppError.tokenizerNotFound
         }
         tokenizer = try await AutoTokenizer.from(
             tokenizerConfig: tokenizerConfig,
             tokenizerData: languageModel.tokenizerData
         )
-        seqLen = model.seqLen ?? 64
+        eosTokenId = tokenizer?.eosTokenId ?? 0
         if let tokenizer {
             appLogger.logTokenizer(tokenizer)
         }
@@ -63,14 +63,14 @@ final class TokenBasedLLMService: LLMService {
 
     func generateResponse(for prompt: String) async throws -> String {
         guard let tokenizer else {
-            throw LLMError.tokenizerNotFound
+            throw AppError.tokenizerNotFound
         }
         appLogger.logPrompt(prompt)
-        input_ids_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
-        attention_mask_array = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
+        inputIDs = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
+        attentionMask = try MLMultiArray(shape: [1, seqLen] as [NSNumber], dataType: .int32)
         return try await withTimeout { [weak self] in
             guard let self else {
-                throw LLMError.invalidOutput
+                throw AppError.invalidOutput
             }
             var tokens = tokenizer.encode(text: prompt)
             var newTokens = [Int]()
@@ -91,31 +91,25 @@ final class TokenBasedLLMService: LLMService {
     }
 
     private func predictNextToken(from tokens: [Int]) throws -> Int {
-        guard let languageModel else {
-            throw LLMError.modelNotFound
-        }
-        guard let tokenizer else {
-            throw LLMError.tokenizerNotFound
+        guard let pipeline else {
+            throw AppError.modelNotFound
         }
         let truncated = tokens.suffix(seqLen)
         let padded = Array(truncated) +
-        Array(repeating: tokenizer.eosTokenId ?? 0, count: seqLen - truncated.count)
-        let attentionValues = padded.map { $0 == (tokenizer.eosTokenId ?? 0) ? 0 : 1 }
+        Array(repeating: eosTokenId, count: seqLen - truncated.count)
+        let attentionValues = padded.map { $0 == eosTokenId ? 0 : 1 }
         // ⚡️ Reuse buffer
-        let inputPtr = UnsafeMutablePointer<Int32>(OpaquePointer(input_ids_array.dataPointer))
-        let maskPtr = UnsafeMutablePointer<Int32>(OpaquePointer(attention_mask_array.dataPointer))
+        let inputIDsPointer = UnsafeMutablePointer<Int32>(OpaquePointer(inputIDs.dataPointer))
+        let attentionMaskPointer = UnsafeMutablePointer<Int32>(
+            OpaquePointer(attentionMask.dataPointer)
+        )
         for i in 0..<seqLen {
-            inputPtr[i] = Int32(padded[i])
-            maskPtr[i] = Int32(attentionValues[i])
+            inputIDsPointer[i] = Int32(padded[i])
+            attentionMaskPointer[i] = Int32(attentionValues[i])
         }
-        let provider = try MLDictionaryFeatureProvider(dictionary: [
-            "input_ids": input_ids_array,
-            "attention_mask": attention_mask_array
-        ])
-        let output = try languageModel.model.prediction(from: provider)
-        guard let outputLogits = output.featureValue(for: "logits")?.multiArrayValue else {
-            throw LLMError.invalidOutput
-        }
+        let input = CoreMLTokenInput(inputIDs: inputIDs, attentionMask: attentionMask)
+        let output = try pipeline.predict(input: input)
+        let outputLogits = output.logits
         let logitsSlice = MLMultiArray.slice(
             outputLogits,
             indexing: [.select(0), .select(truncated.count - 1), .slice]
@@ -127,9 +121,9 @@ final class TokenBasedLLMService: LLMService {
 
     private func decode(tokens: [Int]) throws -> String {
         guard let tokenizer else {
-            throw LLMError.tokenizerNotFound
+            throw AppError.tokenizerNotFound
         }
-        return tokenizer.decode(tokens: tokens).trimmingCharacters(in: .whitespacesAndNewlines)
+        return tokenizer.decode(tokens: tokens)
     }
 }
 

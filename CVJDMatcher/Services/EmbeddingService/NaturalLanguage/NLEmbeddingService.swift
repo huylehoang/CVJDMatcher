@@ -17,17 +17,17 @@ final class NLEmbeddingService: EmbeddingService {
 
     func loadModel() async throws {
         guard let model = NLEmbedding.sentenceEmbedding(for: language) else {
-            throw EmbeddingError.modelNotFound
+            throw AppError.modelNotFound
         }
         self.model = model
     }
 
     func embed(_ text: String) throws -> [Float] {
         guard let model = model else {
-            throw EmbeddingError.modelNotFound
+            throw AppError.modelNotFound
         }
         guard let vector = model.vector(for: text) else {
-            throw EmbeddingError.invalidOutput
+            throw AppError.invalidOutput
         }
         return vector.map { Float($0) }
     }

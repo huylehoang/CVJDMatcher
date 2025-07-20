@@ -32,47 +32,19 @@ extension LLMService {
         let seconds = generationTimeoutInSeconds
         return try await withThrowingTaskGroup(of: T.self) { group in
             group.addTask {
-                try await operation()
+                try Task.checkCancellation()
+                return try await operation()
             }
             group.addTask {
+                try Task.checkCancellation()
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw LLMError.inferenceTimedOut
+                throw AppError.inferenceTimedOut
             }
             guard let result = try await group.next() else {
-                throw LLMError.inferenceTimedOut
+                throw AppError.inferenceTimedOut
             }
             group.cancelAll()
             return result
-        }
-    }
-}
-
-/// Errors related to Core ML model loading or inference failures.
-enum LLMError: Error, LocalizedError {
-    case modelNotFound
-    case tokenizerNotFound
-    case predictionFailed
-    case outputMissing
-    case invalidInput
-    case invalidOutput
-    case inferenceTimedOut
-
-    var errorDescription: String? {
-        switch self {
-        case .modelNotFound:
-            "Core ML reasoning model not found."
-        case .tokenizerNotFound:
-            "Tokenizer not found."
-        case .predictionFailed:
-            "Failed to run prediction with reasoning model."
-        case .outputMissing:
-            "No explanation found in model output."
-        case .invalidInput:
-            "Invalid input format found in model input."
-        case .invalidOutput:
-            "Invalid explanation format found in model output."
-        case .inferenceTimedOut:
-            "Response generation timed out."
         }
     }
 }

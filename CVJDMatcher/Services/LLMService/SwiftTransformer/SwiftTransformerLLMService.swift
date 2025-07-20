@@ -36,16 +36,11 @@ final class SwiftTransformerLLMService: LLMService {
     }
 
     func loadModel() async throws {
-        guard let url = bundle.url(forResource: modelName, withExtension: ".mlmodelc") else {
-            throw LLMError.modelNotFound
-        }
-        let configuration = MLModelConfiguration()
-        configuration.computeUnits = .all
-        let model = try MLModel(contentsOf: url, configuration: configuration)
+        let model = try ModelLoader.loadMLModel(modelName: modelName, bundle: bundle)
         let languageModel = LanguageModel(model: model)
         self.languageModel = languageModel
         guard let tokenizerConfig = try await languageModel.tokenizerConfig else {
-            throw LLMError.tokenizerNotFound
+            throw AppError.tokenizerNotFound
         }
         tokenizer = try await AutoTokenizer.from(
             tokenizerConfig: tokenizerConfig,
@@ -58,16 +53,16 @@ final class SwiftTransformerLLMService: LLMService {
 
     func generateResponse(for prompt: String) async throws -> String {
         guard let languageModel else {
-            throw LLMError.modelNotFound
+            throw AppError.modelNotFound
         }
         guard let tokenizer else {
-            throw LLMError.tokenizerNotFound
+            throw AppError.tokenizerNotFound
         }
         let prompt = prompt + "\n\(SwiftTransformerLLMService.marker)"
         appLogger.logPrompt(prompt)
         return try await withTimeout { [weak self] in
             guard let self else {
-                throw LLMError.invalidOutput
+                throw AppError.invalidOutput
             }
             var config = generationConfig
             config.eosTokenId = tokenizer.eosTokenId

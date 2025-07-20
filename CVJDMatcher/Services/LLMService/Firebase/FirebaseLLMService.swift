@@ -26,10 +26,10 @@ final class FirebaseLLMService: LLMService {
 
     func generateResponse(for prompt: String) async throws -> String {
         guard let model else {
-            throw LLMError.modelNotFound
+            throw AppError.modelNotFound
         }
+        appLogger.logPrompt(prompt)
         return try await withTimeout { [weak self] in
-            self?.appLogger.logPrompt(prompt)
             var result = ""
             let stream = try model.generateContentStream(prompt)
             for try await chunk in stream {

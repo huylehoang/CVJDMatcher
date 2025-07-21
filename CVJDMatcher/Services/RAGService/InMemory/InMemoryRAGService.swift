@@ -44,21 +44,8 @@ final class InMemoryRAGService: RAGService {
     /// Load and embed a list of CVs
     func indexData(_ data: [String]) throws {
         self.data = data
-        embeddings = try data.map { cv in
-            // -- Split long CV into chunks for better embedding
-            let chunks = try chunker.chunk(text: cv)
-            if chunks.isEmpty {
-                // If CV is short, embed the full string
-                return try embeddingService.embed(cv)
-            }
-            // Otherwise, embed each chunk separately
-            let chunkEmbeds = try chunks.map { try embeddingService.embed($0.text) }
-            // Compute the average embedding vector for the CV
-            return chunkEmbeds
-                .reduce([Float](repeating: 0, count: chunkEmbeds[0].count)) { acc, vec in
-                    zip(acc, vec).map(+)
-                }
-                .map { $0 / Float(chunkEmbeds.count) }
+        embeddings = try data.map { text in
+            try chunker.embedWithChunking(text: text, using: embeddingService)
         }
     }
 

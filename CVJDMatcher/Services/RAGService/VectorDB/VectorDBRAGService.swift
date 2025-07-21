@@ -36,20 +36,9 @@ final class VectorDBRAGService: RAGService {
     }
 
     func indexData(_ data: [String]) throws {
-        let vectors = try data.map { cv -> (text: String, embedding: [Float]) in
-            let chunks = try chunker.chunk(text: cv)
-            let finalEmbedding: [Float]
-            if chunks.isEmpty {
-                finalEmbedding = try embeddingService.embed(cv)
-            } else {
-                let chunkEmbeds = try chunks.map { try embeddingService.embed($0.text) }
-                finalEmbedding = chunkEmbeds
-                    .reduce([Float](repeating: 0, count: chunkEmbeds[0].count)) { acc, vec in
-                        zip(acc, vec).map(+)
-                    }
-                    .map { $0 / Float(chunkEmbeds.count) }
-            }
-            return (text: cv, embedding: finalEmbedding)
+        let vectors = try data.map { text in
+            let embedding = try chunker.embedWithChunking(text: text, using: embeddingService)
+            return (text: text, embedding: embedding)
         }
         try vectorDB.clear()
         try vectorDB.index(vectors: vectors)

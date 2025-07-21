@@ -16,11 +16,20 @@ enum DataSourceOption: String, CaseIterable, Identifiable {
     }
 }
 
+struct MatchingInputData: Identifiable {
+    let id = UUID()
+    let jd: String
+    let cvs: [String]
+}
+
 struct ContentView: View {
+    private let appEnvironment = StandardAppEnvironment.shared
     @StateObject private var viewModel = ContentViewModel()
     @State private var showSettings = false
     @State private var showSourceDialog = false
-    @State private var selectedSource: DataSourceOption?
+    @State private var showJDPreview = false
+    @State private var selectedDataSourceOption: DataSourceOption?
+    @State private var isShowingSheet = false
     private let analyzingText = " ● Analyzing..."
 
     var body: some View {
@@ -38,7 +47,8 @@ struct ContentView: View {
                     ) {
                         ForEach(DataSourceOption.allCases) { option in
                             Button(option.rawValue) {
-                                selectedSource = option
+                                selectedDataSourceOption = option
+                                isShowingSheet = true
                             }
                         }
                     }
@@ -49,8 +59,18 @@ struct ContentView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Job Description")
                                 .font(.headline)
-                            Text(viewModel.jd)
-                                .font(.system(size: 14))
+                            if viewModel.jd.count > 500 {
+                                Button(action: {
+                                    showJDPreview = true
+                                }) {
+                                    Text("✅ JD loaded (\(viewModel.jd.count) characters)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.green)
+                                }
+                            } else {
+                                Text(viewModel.jd)
+                                    .font(.system(size: 14))
+                            }
                         }
                         .padding(.vertical, 8)
                     }
@@ -90,25 +110,46 @@ struct ContentView: View {
                         showSettings = true
                     } label: {
                         Image(systemName: "gear")
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.gray)
                     }
                 }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView {
+                    if selectedDataSourceOption == .uploadFiles &&
+                        appEnvironment.llmServiceType != .firebase_gemini_1_5_flash {
+                        viewModel.setup(jd: "", cvs: [])
+                    }
                     viewModel.runMatchingFlow()
                 }
             }
-            .sheet(item: $selectedSource) { source in
-                switch source {
-                case .sampleData:
-                    SampleDataView { sampleData in
-                        viewModel.setup(jd: sampleData.jd, cvs: sampleData.cvs)
-                        viewModel.runMatchingFlow()
+            .sheet(isPresented: $isShowingSheet) {
+                if let source = selectedDataSourceOption {
+                    switch source {
+                    case .sampleData:
+                        SampleDataView { data in
+                            viewModel.setup(jd: data.jd, cvs: data.cvs)
+                            viewModel.runMatchingFlow()
+                        }
+                    case .uploadFiles:
+                        switch appEnvironment.llmServiceType {
+                        case .firebase_gemini_1_5_flash:
+                            UploadFilesView { data in
+                                viewModel.setup(jd: data.jd, cvs: data.cvs)
+                                viewModel.runMatchingFlow()
+                            }
+                        default:
+                            Text("Should use Upload Files feature for Firebase AI")
+                        }
                     }
-                case .uploadFiles:
-                    Text("🛠️ Real data screen to be implemented")
                 }
+            }
+            .sheet(isPresented: $showJDPreview) {
+                ScrollView {
+                    Text(viewModel.jd)
+                        .padding()
+                }
+                .navigationTitle("JD Preview")
             }
         }
     }

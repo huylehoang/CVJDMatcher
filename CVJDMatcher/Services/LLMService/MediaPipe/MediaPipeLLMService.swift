@@ -56,10 +56,10 @@ final class MediaPipeLLMService: LLMService {
         guard let session else {
             throw AppError.modelNotFound
         }
-        try session.addQueryChunk(inputText: prompt)
-        let stream = session.generateResponseAsync()
         appLogger.logPrompt(prompt)
         return try await withTimeout { [weak self] in
+            try session.addQueryChunk(inputText: prompt)
+            let stream = session.generateResponseAsync()
             var result = ""
             for try await prediction in stream {
                 try Task.checkCancellation()

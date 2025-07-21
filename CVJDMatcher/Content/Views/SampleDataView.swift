@@ -7,16 +7,8 @@
 
 import SwiftUI
 
-struct SampleData: Identifiable {
-    let id = UUID()
-    let jd: String
-    let cvs: [String]
-}
-
 struct SampleDataView: View {
     @Environment(\.dismiss) private var dismiss
-    let onApply: (SampleData) -> Void
-
     private let jd = """
     We are hiring a passionate iOS Developer to join our mobile team. \
     The ideal candidate should have:
@@ -27,7 +19,7 @@ struct SampleDataView: View {
     - Bonus: experience with SwiftUI, modular architecture, or Core ML
     """
     private let cvs = [
-         """
+        """
         Nguyen A is a Senior iOS Engineer with over 5 years of experience developing apps \
         for finance and e-commerce. Skilled in Swift, MVVM, Combine, and UIKit. Recently worked \
         on a modular iOS architecture project using Swift Package Manager. Experienced with \
@@ -76,6 +68,7 @@ struct SampleDataView: View {
         Jenkins. Managed Docker/K8s clusters and improved deployment pipelines reliability.
         """
     ]
+    let onApply: (MatchingInputData) -> Void
 
     var body: some View {
         NavigationView {
@@ -84,7 +77,6 @@ struct SampleDataView: View {
                     Text(jd)
                         .font(.system(size: 14))
                 }
-
                 Section(header: Text("👤 Candidate CVs").font(.headline)) {
                     ForEach(cvs, id: \.self) { cv in
                         Text(cv)
@@ -96,7 +88,7 @@ struct SampleDataView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
-                        onApply(SampleData(jd: jd, cvs: cvs))
+                        onApply(MatchingInputData(jd: jd, cvs: cvs))
                         dismiss()
                     }
                 }

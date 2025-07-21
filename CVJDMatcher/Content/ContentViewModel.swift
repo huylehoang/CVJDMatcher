@@ -33,6 +33,11 @@ final class ContentViewModel: ObservableObject {
         isLoading = true
         // Cancel previous task if running
         currentTask?.cancel()
+        if jd.isEmpty || cvs.isEmpty {
+            isLoading = false
+            errorMessage = "Please input JD or CVs"
+            return
+        }
         let ragService = ragServiceProvider.ragService
         // Use Task.detached to run CPU-heavy work off the main thread
 

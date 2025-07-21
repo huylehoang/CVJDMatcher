@@ -7,23 +7,53 @@
 
 import SwiftUI
 
+enum DataSourceOption: String, CaseIterable, Identifiable {
+    case sampleData = "Try with Sample Data"
+    case uploadFiles = "Upload Files"
+
+    var id: String {
+        rawValue
+    }
+}
+
 struct ContentView: View {
     @StateObject private var viewModel = ContentViewModel()
     @State private var showSettings = false
+    @State private var showSourceDialog = false
+    @State private var selectedSource: DataSourceOption?
     private let analyzingText = " ● Analyzing..."
 
     var body: some View {
         NavigationView {
             List {
-                // JD section
+                // Source selection
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Job Description")
-                            .font(.headline)
-                        Text(viewModel.jd)
-                            .font(.system(size: 14))
+                    Button("📁 Choose Source") {
+                        showSourceDialog = true
                     }
-                    .padding(.vertical, 8)
+                    .confirmationDialog(
+                        "Select Data Source",
+                        isPresented: $showSourceDialog,
+                        titleVisibility: .visible
+                    ) {
+                        ForEach(DataSourceOption.allCases) { option in
+                            Button(option.rawValue) {
+                                selectedSource = option
+                            }
+                        }
+                    }
+                }
+                // JD section
+                if !viewModel.jd.isEmpty {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Job Description")
+                                .font(.headline)
+                            Text(viewModel.jd)
+                                .font(.system(size: 14))
+                        }
+                        .padding(.vertical, 8)
+                    }
                 }
                 // Error section
                 if let error = viewModel.errorMessage {
@@ -69,135 +99,15 @@ struct ContentView: View {
                     viewModel.runMatchingFlow()
                 }
             }
-            .onAppear {
-                viewModel.runMatchingFlow()
-            }
-        }
-    }
-}
-
-struct AnalyzingText: View {
-    let text: String
-    private let cursorTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
-    @State private var showCursor = true
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 14))
-            .foregroundColor(.gray.opacity(showCursor ? 0.6 : 0.15))
-            .onReceive(cursorTimer) { _ in
-                showCursor.toggle()
-            }
-    }
-}
-
-struct MatchResultDescriptionText: View {
-    let text: String
-    let analyzingText: String
-    let isLoading: Bool
-    private let cursorTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
-    @State private var showCursor = true
-    @State private var flash = false
-
-    var body: some View {
-        var attrText = AttributedString(text)
-        attrText.foregroundColor = .primary
-        if isLoading {
-            var cursor = AttributedString(analyzingText)
-            cursor.foregroundColor = .gray.opacity(showCursor ? 0.6 : 0.15)
-            attrText.append(cursor)
-        }
-        return Text(attrText)
-            .opacity(flash ? 0.3 : 1.0)
-            .animation(.easeInOut(duration: 0.25), value: flash)
-            .font(.system(size: 14))
-            .onChange(of: text) { _ in
-                flash = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                    flash = false
-                }
-            }
-            .onReceive(cursorTimer) { _ in
-                showCursor.toggle()
-            }
-    }
-}
-
-struct SettingsView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var ragServiceType = StandardAppEnvironment.shared.ragServiceType
-    @State private var embeddingServiceType = StandardAppEnvironment.shared.embeddingServiceType
-    @State private var llmServiceType = StandardAppEnvironment.shared.llmServiceType
-    @State private var promptServiceType = StandardAppEnvironment.shared.promptServiceType
-
-    let onApply: () -> Void
-
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(
-                    header: Text("RAG Service")
-                        .font(.system(size: 18, weight: .bold))
-                ) {
-                    Picker("Type", selection: $ragServiceType) {
-                        ForEach(RAGServiceType.allCases, id: \.self) {
-                            Text($0.rawValue)
-                        }
+            .sheet(item: $selectedSource) { source in
+                switch source {
+                case .sampleData:
+                    SampleDataView { sampleData in
+                        viewModel.setup(jd: sampleData.jd, cvs: sampleData.cvs)
+                        viewModel.runMatchingFlow()
                     }
-                    .pickerStyle(.menu)
-                }
-                Section(
-                    header: Text("Embedding Service")
-                        .font(.system(size: 18, weight: .bold))
-                ) {
-                    Picker("Model", selection: $embeddingServiceType) {
-                        ForEach(EmbeddingServiceType.allCases, id: \.self) {
-                            Text($0.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-                Section(
-                    header: Text("LLM Service")
-                        .font(.system(size: 18, weight: .bold))
-                ) {
-                    Picker("Model", selection: $llmServiceType) {
-                        ForEach(LLMServiceType.allCases, id: \.self) {
-                            Text($0.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-                Section(
-                    header: Text("Prompt Service")
-                        .font(.system(size: 18, weight: .bold))
-                ) {
-                    Picker("Type", selection: $promptServiceType) {
-                        ForEach(PromptServiceType.allCases, id: \.self) {
-                            Text($0.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                }
-            }
-            .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Apply") {
-                        StandardAppEnvironment.shared.set(ragServiceType: ragServiceType)
-                        StandardAppEnvironment.shared.set(
-                            embeddingServiceType: embeddingServiceType
-                        )
-                        StandardAppEnvironment.shared.set(llmServiceType: llmServiceType)
-                        StandardAppEnvironment.shared.set(promptServiceType: promptServiceType)
-                        dismiss()
-                        onApply()
-                    }
+                case .uploadFiles:
+                    Text("🛠️ Real data screen to be implemented")
                 }
             }
         }

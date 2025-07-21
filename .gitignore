@@ -41,3 +41,7 @@ CoreMLModels/
 # --- ⛔️ Ignore CocoaPods dependencies ---
 Pods/
 Podfile.lock
+
+# Ignore Firebase config
+GoogleService-Info.plist
+**/GoogleService-Info.plist

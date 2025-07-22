@@ -24,6 +24,7 @@ struct UploadFilesView: View {
     @State private var showJDPreview = false
     @State private var selectedCVPreview: (CVPreviewItem)?
     private let allowedContentTypes: [UTType] = [.plainText, .pdf, .rtf]
+    private let textExtractor: TextExtractor = StandardTextExtractor()
     let onApply: (MatchingInputData) -> Void
 
     var body: some View {
@@ -39,7 +40,7 @@ struct UploadFilesView: View {
                         allowsMultipleSelection: false
                     ) { result in
                         if let url = try? result.get().first {
-                            if let text = extractText(from: url) {
+                            if let text = textExtractor.extractText(from: url) {
                                 jd = text
                             }
                         }
@@ -66,7 +67,7 @@ struct UploadFilesView: View {
                         if let urls = try? result.get() {
                             var results: [(url: URL, content: String)] = []
                             for url in urls {
-                                if let text = extractText(from: url) {
+                                if let text = textExtractor.extractText(from: url) {
                                     results.append((url: url, content: text))
                                 }
                             }
@@ -124,42 +125,5 @@ struct UploadFilesView: View {
                 .navigationTitle(item.name)
             }
         }
-    }
-
-    private func extractText(from url: URL) -> String? {
-        guard url.startAccessingSecurityScopedResource() else {
-            return nil
-        }
-        defer {
-            url.stopAccessingSecurityScopedResource()
-        }
-        let ext = url.pathExtension.lowercased()
-        switch ext {
-        case "txt":
-            if let data = try? Data(contentsOf: url),
-               let text = String(data: data, encoding: .utf8)
-                ?? String(data: data, encoding: .ascii)
-                ?? String(data: data, encoding: .isoLatin1) {
-                return text
-            }
-        case "pdf":
-            if let pdfDoc = PDFDocument(url: url) {
-                return (0..<pdfDoc.pageCount)
-                    .compactMap { pdfDoc.page(at: $0)?.string }
-                    .joined(separator: "\n")
-            }
-        case "rtf":
-            if let data = try? Data(contentsOf: url),
-               let attrString = try? NSAttributedString(
-                data: data,
-                options: [.documentType: NSAttributedString.DocumentType.rtf],
-                documentAttributes: nil
-               ) {
-                return attrString.string
-            }
-        default:
-            return nil
-        }
-        return nil
     }
 }

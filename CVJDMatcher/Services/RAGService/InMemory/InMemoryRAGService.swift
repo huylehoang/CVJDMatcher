@@ -66,11 +66,8 @@ final class InMemoryRAGService: RAGService {
         llmService.onPartialOuput = {
             onPartial?($0.cleanedLLMResponse)
         }
-        let prompt = promptService.prompt(
-            jd: query,
-            cvs: Array(matchResults).cvs,
-            topK: topK
-        )
+        let cvs = Array(matchResults).cvs
+        let prompt = promptService.prompt(jd: query, cvs: cvs, topK: topK)
         let response = try await llmService.generateResponse(for: prompt)
         return response.cleanedLLMResponse
     }

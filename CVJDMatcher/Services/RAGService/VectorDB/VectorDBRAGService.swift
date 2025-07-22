@@ -53,11 +53,8 @@ final class VectorDBRAGService: RAGService {
         llmService.onPartialOuput = {
             onPartial?($0.cleanedLLMResponse)
         }
-        let prompt = promptService.prompt(
-            jd: query,
-            cvs: topVectors.cvs,
-            topK: topK
-        )
+        let cvs = topVectors.cvs
+        let prompt = promptService.prompt(jd: query, cvs: cvs, topK: topK)
         let response = try await llmService.generateResponse(for: prompt)
         return response.cleanedLLMResponse
     }

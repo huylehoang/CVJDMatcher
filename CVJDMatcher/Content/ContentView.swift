@@ -87,11 +87,7 @@ struct ContentView: View {
                 if let result = viewModel.result {
                     Section {
                         VStack(alignment: .leading, spacing: 6) {
-                            MatchResultDescriptionText(
-                                text: result,
-                                analyzingText: analyzingText,
-                                isLoading: viewModel.isLoading
-                            )
+                            ResultView(text: result, isLoading: viewModel.isLoading)
                         }
                         .padding(.vertical, 8)
                     }
@@ -99,7 +95,7 @@ struct ContentView: View {
                 // Loading indicator shown at bottom of list
                 if viewModel.isLoading && viewModel.result == nil {
                     Section {
-                        AnalyzingText(text: analyzingText)
+                        ResultView(text: "", isLoading: viewModel.isLoading)
                     }
                 }
             }

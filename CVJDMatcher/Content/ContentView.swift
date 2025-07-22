@@ -30,6 +30,7 @@ struct ContentView: View {
     @State private var showJDPreview = false
     @State private var selectedDataSourceOption: DataSourceOption?
     @State private var isShowingSheet = false
+    private let jdCharacterLimit = 1000
     private let analyzingText = " ● Analyzing..."
 
     var body: some View {
@@ -59,7 +60,7 @@ struct ContentView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Job Description")
                                 .font(.headline)
-                            if viewModel.jd.count > 500 {
+                            if viewModel.jd.count > jdCharacterLimit {
                                 Button(action: {
                                     showJDPreview = true
                                 }) {

@@ -5,6 +5,7 @@
 //  Created by Le Hoang Huy on 21/7/25.
 //
 
+import UniformTypeIdentifiers
 import SwiftUI
 import PDFKit
 
@@ -22,6 +23,7 @@ struct UploadFilesView: View {
     @State private var showCVImporter = false
     @State private var showJDPreview = false
     @State private var selectedCVPreview: (CVPreviewItem)?
+    private let allowedContentTypes: [UTType] = [.plainText, .pdf, .rtf]
     let onApply: (MatchingInputData) -> Void
 
     var body: some View {
@@ -33,7 +35,7 @@ struct UploadFilesView: View {
                     }
                     .fileImporter(
                         isPresented: $showJDImporter,
-                        allowedContentTypes: [.plainText, .pdf],
+                        allowedContentTypes: allowedContentTypes,
                         allowsMultipleSelection: false
                     ) { result in
                         if let url = try? result.get().first {
@@ -58,7 +60,7 @@ struct UploadFilesView: View {
                     }
                     .fileImporter(
                         isPresented: $showCVImporter,
-                        allowedContentTypes: [.plainText, .pdf],
+                        allowedContentTypes: allowedContentTypes,
                         allowsMultipleSelection: true
                     ) { result in
                         if let urls = try? result.get() {
@@ -132,21 +134,31 @@ struct UploadFilesView: View {
             url.stopAccessingSecurityScopedResource()
         }
         let ext = url.pathExtension.lowercased()
-        if ext == "txt" {
+        switch ext {
+        case "txt":
             if let data = try? Data(contentsOf: url),
                let text = String(data: data, encoding: .utf8)
                 ?? String(data: data, encoding: .ascii)
                 ?? String(data: data, encoding: .isoLatin1) {
                 return text
             }
-        } else if ext == "pdf" {
+        case "pdf":
             if let pdfDoc = PDFDocument(url: url) {
                 return (0..<pdfDoc.pageCount)
-                    .compactMap {
-                        pdfDoc.page(at: $0)?.string
-                    }
+                    .compactMap { pdfDoc.page(at: $0)?.string }
                     .joined(separator: "\n")
             }
+        case "rtf":
+            if let data = try? Data(contentsOf: url),
+               let attrString = try? NSAttributedString(
+                data: data,
+                options: [.documentType: NSAttributedString.DocumentType.rtf],
+                documentAttributes: nil
+               ) {
+                return attrString.string
+            }
+        default:
+            return nil
         }
         return nil
     }

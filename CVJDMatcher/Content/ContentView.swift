@@ -26,12 +26,11 @@ struct ContentView: View {
     private let appEnvironment = StandardAppEnvironment.shared
     @StateObject private var viewModel = ContentViewModel()
     @State private var showSettings = false
-    @State private var showSourceDialog = false
+    @State private var showDataSourceDialog = false
+    @State private var showDataSourceSheet = false
     @State private var showJDPreview = false
     @State private var selectedDataSourceOption: DataSourceOption?
-    @State private var isShowingSheet = false
     private let jdCharacterLimit = 1000
-    private let analyzingText = " ● Analyzing..."
 
     var body: some View {
         NavigationView {
@@ -39,17 +38,17 @@ struct ContentView: View {
                 // Source selection
                 Section {
                     Button("📁 Choose Source") {
-                        showSourceDialog = true
+                        showDataSourceDialog = true
                     }
                     .confirmationDialog(
                         "Select Data Source",
-                        isPresented: $showSourceDialog,
+                        isPresented: $showDataSourceDialog,
                         titleVisibility: .visible
                     ) {
                         ForEach(DataSourceOption.allCases) { option in
                             Button(option.rawValue) {
                                 selectedDataSourceOption = option
-                                isShowingSheet = true
+                                showDataSourceSheet = true
                             }
                         }
                     }
@@ -120,7 +119,7 @@ struct ContentView: View {
                     viewModel.runMatchingFlow()
                 }
             }
-            .sheet(isPresented: $isShowingSheet) {
+            .sheet(isPresented: $showDataSourceSheet) {
                 if let source = selectedDataSourceOption {
                     switch source {
                     case .sampleData:

@@ -10,75 +10,41 @@ protocol RAGServiceProvider {
 }
 
 struct StandardRAGServiceProvider: RAGServiceProvider {
-    var embeddingService: EmbeddingService {
-        switch appEnvironment.embeddingServiceType {
-        case .mini_lm:
-            MiniLMEmbeddingService()
-        case .natural_language_for_english:
-            NLEmbeddingService.forEnglish
-        case .stsb_roberta_large:
-            StsbRobertaLargeEmbeddingService()
-        }
-    }
-
-    var llmService: LLMService {
-        switch appEnvironment.llmServiceType {
-        case .media_pipe_gemma_2b_it_cpu_int8:
-            MediaPipeLLMService.gemma_2b_it_cpu_int8
-        case .firebase_gemini_1_5_flash:
-            FirebaseLLMService.gemini_1_5_flash
-        case .token_based_llama_2_7b_chat:
-            TokenBasedLLMService.llama_2_7b_chat
-        case .token_based_tiny_llama:
-            TokenBasedLLMService.tiny_llama
-        case .swift_transformer_llama_2_7b_chat:
-            SwiftTransformerLLMService.llama_2_7b_chat
-        case .swift_transformer_tiny_llama:
-            SwiftTransformerLLMService.tiny_llama
-        }
-    }
-
-    var promptService: PromptService {
-        switch appEnvironment.promptServiceType {
-        case .v1:
-            PromptServiceV1()
-        case .v2:
-            PromptServiceV2()
-        }
-    }
-
-    var vectorDB: VectorDatabase {
-        switch appEnvironment.embeddingServiceType {
-        case .mini_lm:
-            MiniLMVectorDatabase()
-        case .natural_language_for_english:
-            NLVectorDatabase()
-        case .stsb_roberta_large:
-            StsbVectorDatabase()
-        }
-    }
-
     var ragService: RAGService {
         switch appEnvironment.ragServiceType {
         case .inMemory:
             InMemoryRAGService(
-                embeddingService: embeddingService,
-                llmService: llmService,
-                promptService: promptService
+                embeddingService: embeddingServiceProvider.embeddingService,
+                llmService: llmServiceProvider.llmService,
+                promptService: promptServiceProvider.promptService
             )
         case .vectorDB:
             VectorDBRAGService(
-                embeddingService: embeddingService,
-                llmService: llmService,
-                promptService: promptService,
-                vectorDB: vectorDB
+                embeddingService: embeddingServiceProvider.embeddingService,
+                llmService: llmServiceProvider.llmService,
+                promptService: promptServiceProvider.promptService,
+                vectorDB: vectorDBProvider.vectorDB
             )
         }
     }
 
+    private let embeddingServiceProvider: EmbeddingServiceProvider
+    private let llmServiceProvider: LLMServiceProvider
+    private let promptServiceProvider: PromptServiceProvider
+    private let vectorDBProvider: VectorDatabaseProvider
     private let appEnvironment: AppEnvironment
 
-    init(appEnvironment: AppEnvironment = StandardAppEnvironment.shared) {
+    init(
+        appEnvironment: AppEnvironment = StandardAppEnvironment.shared,
+        embeddingServiceProvider: EmbeddingServiceProvider = StandardEmbeddingServiceProvider(),
+        llmServiceProvider: LLMServiceProvider = StandardLLMServiceProvider(),
+        promptServiceProvider: PromptServiceProvider = StandardPromptServiceProvider(),
+        vectorDBProvider: VectorDatabaseProvider = StandardVectoirDatabaseProvider()
+    ) {
         self.appEnvironment = appEnvironment
+        self.embeddingServiceProvider = embeddingServiceProvider
+        self.llmServiceProvider = llmServiceProvider
+        self.promptServiceProvider = promptServiceProvider
+        self.vectorDBProvider = vectorDBProvider
     }
 }
